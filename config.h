@@ -13,26 +13,25 @@
  *
  *  Jesus Carro <jcarro@usj.es> 
  *  Joel Castro <jcastro@usj.es>
- *  version: 1.02 - 13 May 2015
-\************************************************************************/
+ *  version: 1.04 - 3 June 2015
+ \************************************************************************/
 struct CONFIG {
-        double initial_time;
+	double initial_time;
 	double final_time; //ms
 	double dt; //ms
 	int outputFreq;
-	int initPost;
+	long initPost;
+	long lastIteration;
 
 	int numConstantsToChange;
-	int numRatesToChange;
-
+	int numStatesToPrint;
 
 	struct changed_double *ChangedConstants;
 	int * statesToPrint;
 };
 
-struct changed_double
-{
-   	int key;
-   	double value;
+struct changed_double {
+	int key;
+	double value;
 };
 
