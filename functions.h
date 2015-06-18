@@ -86,6 +86,7 @@ int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
 		return 0;
 	}
 
+
 	fstream checkpointFile(chkpt_path, ios::out | ios::binary | ios::trunc);
 
 	checkpointFile.write(reinterpret_cast<const char *>(&it), sizeof(long));
@@ -102,6 +103,7 @@ int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
 void loadDataFromCheckPoint(long* it, int rat_length, const int buffSize,
 		double* STATES) {
 	char chkpt_path[buffSize];
+	double * TEMP_STATES = new double[rat_length];
 	std::string line;
 
 	it = 0;
@@ -114,20 +116,26 @@ void loadDataFromCheckPoint(long* it, int rat_length, const int buffSize,
 	}
 
 	FILE* state = boinc_fopen(chkpt_path, "r");
-	if (!state || appData.wu_cpu_time == 0)
+	if (!state || appData.wu_cpu_time == 0){
 		return;
+	}else{
+		fclose(state);
+	}
+
 
 	fstream checkpointFile(chkpt_path, ios::in | ios::binary);
-	if (checkpointFile.is_open())
-		checkpointFile.close();
+	std::vector<double> STATES_BK (STATES, STATES + rat_length);
 
-	checkpointFile.open(chkpt_path, ios::in | ios::binary);
-
-	checkpointFile.read(reinterpret_cast<char *>(it), sizeof(long));
-
-	for (int stateIterator = 0; stateIterator < rat_length; stateIterator++) {
-		checkpointFile.read(reinterpret_cast<char *>(&STATES[stateIterator]),
-				sizeof(double));
+	try{
+		checkpointFile.read(reinterpret_cast<char *>(&it), sizeof(long));
+		for (int stateIterator = 0; stateIterator < rat_length; stateIterator++) {
+			checkpointFile.read(reinterpret_cast<char *>(&TEMP_STATES[stateIterator]),
+					sizeof(double));
+		}
+		STATES = TEMP_STATES;
+	}catch(std::exception & ex){
+		fprintf(stderr, "EXCEPTION%s\n",ex.what());
+		it = 0;
 	}
 
 	checkpointFile.close();
