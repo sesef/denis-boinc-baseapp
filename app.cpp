@@ -25,6 +25,8 @@ int main() {
 
 	initBoinc();
 
+	fprintf(stderr, "Optimized by Sesef v1.4.1 2015\n");
+
 	getFilePaths(input_path, output_path, buffSize);
 
 	CONFIG config = loadConfiguration(input_path);
@@ -57,24 +59,3 @@ int main() {
 	boinc_finish(0);
 }
 
-#ifdef _WIN32
-
-/*******************************************************
- * Windows: Unix applications begin with main() while Windows applications
- * begin with WinMain, so this just makes WinMain() process the command line
- * and then invoke main()
- */
-
-int WINAPI WinMain(HINSTANCE hInst, HINSTANCE hPrevInst,
-		LPSTR Args, int WinMode)
-{
-	LPSTR command_line;
-	char* argv[100];
-	int argc;
-
-	command_line = GetCommandLine();
-	argc = parse_command_line( command_line, argv );
-	return main();
-}
-
-#endif

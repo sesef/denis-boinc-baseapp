@@ -17,6 +17,8 @@
  \************************************************************************/
 #include <cstddef>		// now required for NULL, etc.
 
+#include "immintrin.h"
+
 #ifdef _WIN32                //  Stuff we only need on Windows: 
 #include "boinc_win.h"
 #include "util.h"            // parse_command_line(), boinc_sleep()
@@ -71,7 +73,7 @@ std::vector<std::string> string_split(const std::string &s, char delim) {
 
 int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
 	string resolved_name;
-	char chkpt_path[buffSize];
+	char chkpt_path[1024];
 
 	int rc = boinc_resolve_filename(CHECKPOINT_FILE, chkpt_path, buffSize);
 	if (rc) {
@@ -102,7 +104,7 @@ int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
 
 void loadDataFromCheckPoint(long* it, int rat_length, const int buffSize,
 		double* STATES) {
-	char chkpt_path[buffSize];
+	char chkpt_path[1024];
 	double * TEMP_STATES = new double[rat_length];
 	std::string line;
 
@@ -261,6 +263,7 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 	int * statesToPrint = config.statesToPrint;
 	changed_double * ChangedConstants = config.ChangedConstants;
 	int iteratorRates = 0;
+	double precomp[200];
 
 	for (int iteratorConstants = 0; iteratorConstants < numConstantsToChange;
 			iteratorConstants++)
@@ -279,11 +282,21 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 	loadDataFromCheckPoint(&it, rat_length, buffSize, STATES);
 
 	int saveIterator = 0;
+	double last = 1.0 / double(lastIteration);
+
+	precompute(CONSTANTS, precomp);
+
 	for (; it <= lastIteration; it++) {
-		boinc_fraction_done(double(it / lastIteration));
+
+		if ((it % 0x80000) == 0)
+		{
+			double frac = double(it) * last;
+		//	printf("Progress %f\n", frac);
+			boinc_fraction_done(frac);
+		}
 
 		VOI = dt * it; //Integration variable, in this case, time
-		computeRates(VOI, CONSTANTS, RATES, STATES, ALGEBRAIC);
+		computeRates(VOI, CONSTANTS, precomp, RATES, STATES);
 		if (it % outputFreq == 0 && it >= initPost)
 			saveStates[saveIterator++] = VOI;
 
