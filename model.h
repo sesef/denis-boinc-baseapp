@@ -19,6 +19,8 @@
 //
 //==============================================================================
 
+#include "fmath.h"
+
 // Save in the inputs the number of elements in the vectors.
 void vectorsLength(int* algebraicLength, int* statesLength, int* constantsLength){
 	*algebraicLength = 118;
@@ -527,8 +529,8 @@ void precompute(double *constants, double *out)
 {
 	out[0] = (constants[15] / constants[113]);
 
-	out[1] = 1.0 / (constants[118] * 2.00000*constants[2]);
-	out[2] = 1.0 / (constants[116] * 2.00000*constants[2]);
+	out[1] = -constants[3] / (constants[118] * 2.00000*constants[2]);
+	out[2] = -constants[3] / (constants[116] * 2.00000*constants[2]);
 
 	out[3] = (constants[12] / constants[118]);
 	out[4] = (constants[12] / constants[116]);
@@ -542,96 +544,333 @@ void precompute(double *constants, double *out)
 
 	out[10] = pow((constants[22] / 5.40000), 1.0 / 2);
 	out[11] = pow(constants[58], 1.60000);
+
+	out[12] = (1.00000 / (2.00000*constants[108]));
+	out[13] = log(constants[44]);
+
+	out[14] = (1.00000 / constants[108]);
+	out[15] = log(constants[20]);
+
+	out[16] = log(constants[22] + constants[107] * constants[20]);
+
+	out[18] = constants[17] * constants[8] * constants[16];
+	out[19] = constants[17] * constants[109] * constants[16];
+
+	out[20] = constants[19] * constants[8] * constants[18];
+	out[21] = constants[19] * constants[109] * constants[18];
+
+	out[22] = constants[25] * constants[8] * constants[21] * constants[22];
+	out[23] = constants[25] * constants[109] * constants[21] * constants[22];
+
+	out[24] = constants[46] * constants[2] * constants[108];
+	out[25] = constants[46] * constants[2] * constants[108];
+
+	out[26] = 0.124500;
+	out[27] = 0.0365000*constants[112];
+
+	out[28] = constants[24] * constants[24] * constants[24] * constants[24];
+	out[29] = (constants[22] + constants[23]);
+
+	out[30] = constants[55];
+	out[31] = (constants[55] - 1.00000);
+
+	out[32] = constants[44];
+	out[33] = (constants[20] * constants[20] * constants[20]);
+
+	out[34] = constants[48] * constants[9];
+	out[35] = constants[48] * constants[110];
+
+	out[36] = constants[57] * constants[8] * constants[56];
+	out[37] = constants[57] * constants[109] * constants[56];
+
+	out[38] = 1.0 / constants[52];
+	out[39] = 1.0 / constants[50];
+
+	out[40] = constants[53] * constants[53] * constants[53];
+	out[41] = 0.0;
+
+	out[42] = -1.0 / (constants[118] * constants[2]);
+	out[43] = -1.0 / (constants[116] * constants[2]);
+
+	out[44] = (constants[14] / constants[118]);
+	out[45] = (constants[14] / constants[116]);
+
+	out[46] = 0.0;
+	out[47] = (constants[15] / constants[116]);
+
+	out[48] = constants[27] * constants[26] * out[10];
+	out[49] = constants[32] * constants[31];
+
+	out[50] = constants[30] * constants[8] * constants[28];
+	out[51] = constants[30] * constants[109] * constants[29];
+
+	out[52] = constants[35] * constants[33];
+	out[53] = constants[35] * constants[34];
+
+	out[54] = constants[37] * constants[36] * out[10];
+	out[55] = 0.0;
+
+	out[56] = constants[48] * constants[47] * constants[2] * constants[108];
+	out[57] = constants[48] * constants[9] * constants[45] * constants[2] * constants[108];
+
+	out[58] = constants[22];
+	out[59] = constants[44];
+
+	out[60] = constants[60] * constants[8] * constants[59];
+	out[61] = constants[60] * constants[109] * constants[59];
+
+	out[62] = constants[62] * constants[8] * constants[61];
+	out[63] = constants[62] * constants[109] * constants[61];
+
+	out[64] = constants[48] * constants[9] * constants[45] * constants[2] * constants[108];
+	out[65] = constants[48] * constants[110] * constants[45] * constants[2] * constants[108];
+
+	out[66] = (constants[40] * constants[8] * constants[38]);
+	out[67] = (constants[40] * constants[109] * constants[38]);
+
 }
 
 void computeRates(double VoI, double* constants, double *data, double* rates, double* states)
 {
-	__m128d ones = _mm_set1_pd(1.0);
+	static const __m128d sign_mask = _mm_set1_pd(-0.);
 
-	__m128d stmp1;
-	rates[17] = 1.70000*states[12] * (1.00000 - states[17]) - 0.0119000*states[17];
-	rates[18] = 1.70000*states[13] * (1.00000 - states[18]) - 0.0119000*states[18];
-	rates[35] = data[0] * (states[5] - states[35]);
+	double tmp, tmp1, tmp2, ltmp;
 
-	stmp1.m128d_f64[0] = (56.8600 + states[0]) * -0.11074197120708748615725359911406;
-	stmp1.m128d_f64[1] = (states[0] + 71.5500) * 0.13458950201884253028263795423957;
-	stmp1 = _mm_add_pd(ones, _mm_exp_pd(stmp1));
-	stmp1 = _mm_div_pd(ones, _mm_mul_pd(stmp1, stmp1));
-	double tmp;
-	double algebraic0 = stmp1.m128d_f64[0];
-	double tmp1 = (states[0] + 45.7900) * 0.06435006435006435006435006435006;
-	double tmp2 = (states[0] - 4.82300) * 0.01956181533646322378716744913928;
+	__m128d l1, l2, l3, l4, l5;
+	__m128d s1;
+	__m128d m1;
 
-	__m128d stmp;
-	stmp.m128d_f64[0] = -(tmp1*tmp1);
-	stmp.m128d_f64[1] = -(tmp2*tmp2);
-	stmp = _mm_exp_pd(stmp);
-	double algebraic12 = 0.129200*stmp.m128d_f64[0] + 0.0648700*stmp.m128d_f64[1];
-	rates[1] = (algebraic0 - states[1]) / algebraic12;
+	const __m128d ones = _mm_set1_pd(1.0);
+	const __m128d state0 = _mm_set1_pd(states[0]);
+
+	__m128d stmp, stmp1, stmp2, stmp3, stmp4, stmp5, stmp6, stmp7, stmp8, stmp9, stmp10;
+	__m128d gtmp, gtmp1, gtmp2;
+	__m128d log1;
+
+	l1 = _mm_loadu_pd(&states[17]);
+	l2 = _mm_loadu_pd(&states[12]);
+
+	l3 = _mm_mul_pd(l2, _mm_set1_pd(1.70000));
+	l4 = _mm_sub_pd(ones, l1);
+	l5 = _mm_mul_pd(l1, _mm_set1_pd(0.0119000));
+
+	stmp = _mm_sub_pd(_mm_mul_pd(l3, l4), l5);
+	_mm_storeu_pd(&rates[17], stmp);
+
+	//rates[17] = 1.70000*states[12] * (1.00000 - states[17]) - 0.0119000*states[17];
+	//rates[18] = 1.70000*states[13] * (1.00000 - states[18]) - 0.0119000*states[18];
 	
-	double algebraic1 = (states[0] >= -40.0000 ? 0.00000 : 0.0570000*exp(-(states[0] + 80.0000) * 0.14705882352941176470588235294118));
-	double algebraic13 = (states[0] >= -40.0000 ? 5.92310 / (1.00000 + exp(-(states[0] + 10.6600) * 0.09009009009009009009009009009009)) : 2.70000*exp(0.0790000*states[0]) + 310000.*exp(0.348500*states[0]));
+	//stmp1.m128d_f64[0] = (56.8600 + states[0]) * -0.11074197120708748615725359911406;
+	//stmp1.m128d_f64[1] = (states[0] + 71.5500) * 0.13458950201884253028263795423957;
+
+	l1 = _mm_set_pd(71.5500, 56.8600);
+	l2 = _mm_set_pd(0.13458950201884253028263795423957, -0.11074197120708748615725359911406);
+
+	stmp1 = _mm_mul_pd(l2, _mm_add_pd(l1, state0));
+	stmp1 = _mm_add_pd(ones, fmath::exp_pd(stmp1));
+	stmp1 = _mm_div_pd(ones, _mm_mul_pd(stmp1, stmp1));
+
+	//double algebraic0 = stmp1.m128d_f64[0];
+
+	l1 = _mm_set_pd(-4.82300, 45.7900);
+	l2 = _mm_set_pd(0.01956181533646322378716744913928, 0.06435006435006435006435006435006);
+	s1 = _mm_mul_pd(l2, _mm_add_pd(state0, l1));
+
+	//tmp1 = (states[0] + 45.7900) * 0.06435006435006435006435006435006;
+	//tmp2 = (states[0] - 4.82300) * 0.01956181533646322378716744913928;
+
+	//stmp.m128d_f64[0] = -(tmp1*tmp1);
+	//stmp.m128d_f64[1] = -(tmp2*tmp2);
+	stmp = _mm_mul_pd(s1, s1);
+	stmp = fmath::exp_pd(_mm_or_pd(sign_mask, stmp));
+
+	l1 = _mm_load_sd(&states[1]);
+	l2 = _mm_set_pd(0.0648700, 0.129200);
+
+	stmp = _mm_mul_pd(stmp, l2);
+	stmp = _mm_hadd_pd(stmp, stmp);
+
+	stmp = _mm_div_sd(_mm_sub_sd(stmp1, l1), stmp);
+	_mm_store_sd(&rates[1], stmp);
+	//double algebraic12 = 0.129200*stmp.m128d_f64[0] + 0.0648700*stmp.m128d_f64[1];
+	//rates[1] = (algebraic0 - states[1]) / algebraic12;
+
+	__m128d wtmp1, wtmp2, wtmp3, wtmp4, wtmp5;
+
+	wtmp1.m128d_f64[0] = -(states[0] + 80.0000) * 0.14705882352941176470588235294118;
+	wtmp1.m128d_f64[1] = -(states[0] + 10.6600) * 0.09009009009009009009009009009009;
+	wtmp1 = fmath::exp_pd(wtmp1);
+
+	//wtmp2.m128d_f64[0] = 0.0790000*states[0];
+	//wtmp2.m128d_f64[1] = 0.348500*states[0];
+
+	l1 = _mm_set_pd(0.348500, 0.0790000);
+	l2 = _mm_set_pd(310000.0, 2.70000);
+
+	wtmp2 = _mm_mul_pd(state0, l1);
+	wtmp2 = fmath::exp_pd(wtmp2);
+	wtmp2 = _mm_mul_pd(wtmp2, l2);
+	wtmp2 = _mm_hadd_pd(wtmp2, wtmp2);
+
+	m1 = _mm_cmpge_pd(state0, _mm_set1_pd(-40.0000));
+	
+	double algebraic1 = (states[0] >= -40.0000 ? 0.00000 : 0.0570000*wtmp1.m128d_f64[0]);
+	//double algebraic13 = (states[0] >= -40.0000 ? 5.92310 / (1.00000 + wtmp1.m128d_f64[1]) : 2.70000*wtmp2.m128d_f64[0] + 310000.*wtmp2.m128d_f64[1]);
+	
+	double algebraic13 = (states[0] >= -40.0000 ? 5.92310 / (1.00000 + wtmp1.m128d_f64[1]) : wtmp2.m128d_f64[0]);
+	
 	double algebraic26 = 1.00000 / (algebraic1 + algebraic13);
 	double algebraic33 = stmp1.m128d_f64[1];
 	rates[2] = (algebraic33 - states[2]) / algebraic26;
 
-	double algebraic2 = (states[0] >= -40.0000 ? 0.00000 : ((-25428.0*exp(0.244400*states[0]) - 6.94800e-06*exp(-0.0439100*states[0]))*(states[0] + 37.7800)) / (1.00000 + exp(0.311000*(states[0] + 79.2300))));
-	double algebraic14 = (states[0] >= -40.0000 ? (0.600000*exp(0.0570000*states[0])) / (1.00000 + exp(-0.100000*(states[0] + 32.0000))) : (0.0242400*exp(-0.0105200*states[0])) / (1.00000 + exp(-0.137800*(states[0] + 40.1400))));
+	//wtmp1.m128d_f64[0] = 0.244400*states[0];
+	//wtmp1.m128d_f64[1] = -0.0439100*states[0];
+	wtmp5 = _mm_mul_pd(state0, _mm_set_pd(-0.0439100, 0.244400));
+	wtmp5 = fmath::exp_pd(wtmp5);
+	wtmp5 = _mm_mul_pd(wtmp5, _mm_set_pd(-6.94800e-06, -25428.0));
+	wtmp5 = _mm_hadd_pd(wtmp5, wtmp5);
+
+	wtmp2.m128d_f64[0] = 0.311000*(states[0] + 79.2300);
+	wtmp2.m128d_f64[1] = 0.0570000*states[0];
+	wtmp2 = fmath::exp_pd(wtmp2);
+
+	wtmp3.m128d_f64[0] = -0.100000*(states[0] + 32.0000);
+	wtmp3.m128d_f64[1] = -0.0105200*states[0];
+	wtmp3 = fmath::exp_pd(wtmp3);
+
+	wtmp4.m128d_f64[0] = -0.137800*(states[0] + 40.1400);
+	wtmp4 = fmath::exp_pd(wtmp4);
+
+	//double algebraic2 = (states[0] >= -40.0000 ? 0.00000 : ((-25428.0*wtmp5.m128d_f64[0] - 6.94800e-06*wtmp1.m128d_f64[1])*(states[0] + 37.7800)) / (1.00000 + wtmp2.m128d_f64[0]));
+
+	double algebraic2 = (states[0] >= -40.0000 ? 0.00000 : ((wtmp5.m128d_f64[0])*(states[0] + 37.7800)) / (1.00000 + wtmp2.m128d_f64[0]));
+
+	double algebraic14 = (states[0] >= -40.0000 ? (0.600000*wtmp2.m128d_f64[1]) / (1.00000 + wtmp3.m128d_f64[0]) : (0.0242400*wtmp3.m128d_f64[1]) / (1.00000 + wtmp4.m128d_f64[0]));
 	double algebraic27 = 1.00000 / (algebraic2 + algebraic14);
 	rates[3] = (algebraic33 - states[3]) / algebraic27;
 
-	stmp1.m128d_f64[0] = -(states[0] + 10.0000) * 0.20000;
-	stmp1.m128d_f64[1] = -(states[0] + 3.80000) * 0.07017543859649122807017543859649;
-	stmp1 = _mm_add_pd(ones, _mm_exp_pd(stmp1));
+	l1 = _mm_set_pd(3.80000, 10.0000);
+	l2 = _mm_set_pd(-0.07017543859649122807017543859649, -0.20000);
+
+	stmp1 = _mm_add_pd(l1, state0);
+	stmp1 = _mm_mul_pd(stmp1, l2);
+
+	//stmp1.m128d_f64[0] = -(states[0] + 10.0000) * 0.20000;
+	//stmp1.m128d_f64[1] = -(states[0] + 3.80000) * 0.07017543859649122807017543859649;
+	stmp1 = _mm_add_pd(ones, fmath::exp_pd(stmp1));
 	stmp1 = _mm_div_pd(ones, stmp1);
 
-	__m128d stmp2, stmp3;
-	stmp2.m128d_f64[0] = (-22.0000 - states[0]) * 0.11111111111111111111111111111111;
-	stmp2.m128d_f64[1] = (states[0] + 11.0000) * 0.11111111111111111111111111111111;
-	stmp2 = _mm_exp_pd(stmp2);
+	l1 = _mm_set_pd(40.0000, -22.0000);
+	l2 = _mm_set_pd(0.050, 0.11111111111111111111111111111111);
+
+	stmp2 = _mm_addsub_pd(l1, state0);
+	stmp2 = _mm_mul_pd(l2, stmp2);
+
+	//stmp2.m128d_f64[0] = (-22.0000 - states[0]) * 0.11111111111111111111111111111111;
+	//stmp2.m128d_f64[1] = (40.0000  + states[0]) * 0.050;
+	stmp2 = fmath::exp_pd(stmp2);
 	stmp2 = _mm_add_pd(ones, stmp2);
 
-	stmp3.m128d_f64[0] = (states[0] + 40.0000) * 0.050;
-	stmp3.m128d_f64[1] = -(states[0] + 2.43600) * 0.07082152974504249291784702549575;
-	stmp3 = _mm_exp_pd(stmp3);
+	l1 = _mm_set_pd(2.43600, 11.0000);
+	l2 = _mm_set_pd(-0.07082152974504249291784702549575, 0.11111111111111111111111111111111);
+
+	stmp3 = _mm_add_pd(state0, l1);
+	stmp3 = _mm_mul_pd(stmp3, l2);
+
+	//stmp3.m128d_f64[0] = (states[0] + 11.0000) * 0.11111111111111111111111111111111;
+	//stmp3.m128d_f64[1] = (states[0] + 2.43600) * -0.07082152974504249291784702549575;
+	stmp3 = fmath::exp_pd(stmp3);
 	stmp3 = _mm_add_pd(ones, stmp3);
 
-	double algebraic3 = stmp1.m128d_f64[0];
-	double algebraic15 = 3300.00 / (stmp2.m128d_f64[0] * stmp2.m128d_f64[1]) + 230.000 / stmp3.m128d_f64[0];
-	rates[6] = (algebraic3 - states[6]) / algebraic15;
-	double algebraic4 = stmp1.m128d_f64[1];
-	double algebraic16 = 990.100 / stmp3.m128d_f64[1];
-	rates[7] = (algebraic4 - states[7]) / algebraic16;
+	l1 = _mm_set_pd(230.000, 3300.00);
+	l2 = _mm_set_pd(990.100, 0.0);
 
-	stmp1.m128d_f64[0] = -(states[0] - 19.0000) * 0.07692307692307692307692307692308;
-	stmp1.m128d_f64[1] = (states[0] + 19.5000) * 0.20;
-	stmp1 = _mm_add_pd(ones, _mm_exp_pd(stmp1));
-	stmp1 = _mm_div_pd(ones, stmp1);
+	stmp2 = _mm_mul_sd(stmp2, stmp3);
+	stmp2 = _mm_div_pd(l1, stmp2);
+	stmp3 = _mm_div_pd(l2, stmp3);
 
-	stmp.m128d_f64[0] = (states[0] + 3.00000) * 0.06666666666666666666666666666667;
-	stmp.m128d_f64[1] = (states[0] + 60.0000) * 0.10;
-	stmp = _mm_exp_pd(stmp);
+	stmp2 = _mm_hadd_pd(stmp2, stmp3);
+
+	l1 = _mm_loadu_pd(&states[6]);
+	stmp1 = _mm_sub_pd(stmp1, l1);
+	stmp1 = _mm_div_pd(stmp1, stmp2);
+	_mm_storeu_pd(&rates[6], stmp1);
+
+	//double algebraic3 = stmp1.m128d_f64[0];
+	//double algebraic15 = 3300.00 / (stmp2.m128d_f64[0] * stmp3.m128d_f64[0]) + 230.000 / stmp2.m128d_f64[1];
+	//rates[6] = (algebraic3 - states[6]) / algebraic15;
+	//double algebraic4 = stmp1.m128d_f64[1];
+	//double algebraic16 = 990.100 / stmp3.m128d_f64[1];
+	//rates[7] = (algebraic4 - states[7]) / algebraic16;
+
+	l1 = _mm_set_pd(19.5000, 19.0000);
+	l2 = _mm_set_pd(0.20, -0.07692307692307692307692307692308);
+	
+	stmp1 = _mm_addsub_pd(state0, l1);
+	stmp1 = _mm_mul_pd(stmp1, l2);
+
+	//stmp1.m128d_f64[0] = -(states[0] - 19.0000) * 0.07692307692307692307692307692308;
+	//stmp1.m128d_f64[1] = (states[0] + 19.5000) * 0.20;
+	stmp1 = _mm_add_pd(ones, fmath::exp_pd(stmp1));
+	stmp1 = _mm_div_pd(ones, stmp1); 
+
+	l1 = _mm_set_pd(60.0000, 3.00000);
+	l2 = _mm_set_pd(0.10, 0.06666666666666666666666666666667);
+
+	stmp = _mm_add_pd(state0, l1);
+	stmp = _mm_mul_pd(stmp, l2);
+
+	//stmp.m128d_f64[0] = (states[0] + 3.00000) * 0.06666666666666666666666666666667;
+	//stmp.m128d_f64[1] = (states[0] + 60.0000) * 0.10;
+	stmp = fmath::exp_pd(stmp);
 	stmp = _mm_add_pd(ones, stmp);
 
-	double algebraic5 = stmp1.m128d_f64[0];
-	double algebraic17 = 9.00000 / stmp.m128d_f64[0] + 0.500000;
-	rates[8] = (algebraic5 - states[8]) / algebraic17;
-	double algebraic6 = stmp1.m128d_f64[1];
-	double algebraic18 = 800.000 / stmp.m128d_f64[1] + 30.0000;
-	rates[9] = (algebraic6 - states[9]) / algebraic18;
+	l1 = _mm_set_pd(800.000, 9.00000);
+	l2 = _mm_set_pd(30.0000, 0.500000);
 
-	tmp = (states[0] + 45.0000) * 0.02;
-	double ltmp = states[0] + 40.0000;
+	stmp = _mm_div_pd(l1, stmp);
+	stmp = _mm_add_pd(stmp, l2);
 
-	stmp.m128d_f64[0] = -(tmp*tmp);
-	stmp.m128d_f64[1] = -(ltmp*ltmp) * 0.00454545454545454545454545454545;
-	stmp = _mm_exp_pd(stmp);
+	stmp2 = _mm_sub_pd(stmp1, _mm_loadu_pd(&states[8]));
+	stmp2 = _mm_div_pd(stmp2, stmp);
+	_mm_storeu_pd(&rates[8], stmp2);
 
-	double algebraic19 = 8.50000*stmp.m128d_f64[0] + 0.500000;
-	rates[10] = (algebraic5 - states[10]) / algebraic19;
-	
-	double algebraic20 = 85.0000*stmp.m128d_f64[1] + 7.00000;
-	rates[11] = (algebraic6 - states[11]) / algebraic20;
+	//double algebraic5 = stmp1.m128d_f64[0];
+	//double algebraic17 = 9.00000 / stmp.m128d_f64[0] + 0.500000;
+	//rates[8] = (algebraic5 - states[8]) / algebraic17;
+	//double algebraic6 = stmp1.m128d_f64[1];
+	//double algebraic18 = 800.000 / stmp.m128d_f64[1] + 30.0000;
+	//rates[9] = (algebraic6 - states[9]) / algebraic18;
+
+	//tmp = (states[0] + 45.0000);
+	//double ltmp = states[0] + 40.0000;
+
+	l1 = _mm_set_pd(40.0000, 45.0000);
+	l2 = _mm_set_pd(-0.00454545454545454545454545454545, -0.0004);
+
+	stmp = _mm_add_pd(state0, l1);
+	stmp = _mm_mul_pd(stmp, stmp);
+	stmp = _mm_mul_pd(stmp, l2);
+
+	//stmp.m128d_f64[0] = -(tmp*tmp) * 0.0004;
+	//stmp.m128d_f64[1] = -(ltmp*ltmp) * 0.00454545454545454545454545454545;
+	stmp = fmath::exp_pd(stmp);
+
+	l1 = _mm_set_pd(85.0000, 8.50000);
+	l2 = _mm_set_pd(7.00000, 0.500000);
+
+	stmp = _mm_mul_pd(stmp, l1);
+	stmp = _mm_add_pd(stmp, l2);
+
+	stmp2 = _mm_sub_pd(stmp1, _mm_loadu_pd(&states[10]));
+	stmp2 = _mm_div_pd(stmp2, stmp);
+	_mm_storeu_pd(&rates[10], stmp2);
+
+	//double algebraic19 = 8.50000*stmp.m128d_f64[0] + 0.500000;
+	//rates[10] = (algebraic5 - states[10]) / algebraic19;	
+	//double algebraic20 = 85.0000*stmp.m128d_f64[1] + 7.00000;
+	//rates[11] = (algebraic6 - states[11]) / algebraic20;
+
 	double algebraic11 = constants[63] - data[5] / (1.00000 + pow(constants[65] / states[19], 2.50000));
 	double algebraic25 = constants[66] / algebraic11;
 	double algebraic32 = constants[67] * algebraic11;
@@ -641,38 +880,69 @@ void computeRates(double VoI, double* constants, double *data, double* rates, do
 	rates[20] = (constants[68] * algebraic39 - algebraic32*states[12] * states[20]) - (algebraic25*tmp1*states[20] - constants[69] * states[21]);
 	rates[22] = (algebraic32*states[12] * states[21] - constants[68] * states[22]) - (constants[69] * states[22] - algebraic25*tmp1*algebraic39);
 
-	stmp1.m128d_f64[0] = (states[0] + 5.00000) * -0.16666666666666666666666666666667;
-	stmp1.m128d_f64[1] = (50.0000 - states[0]) * 0.05;
-	stmp1 = _mm_add_pd(ones, _mm_exp_pd(stmp1));
+	l1 = _mm_set_pd(5.00000, 50.0000);
+	l2 = _mm_set_pd(-0.16666666666666666666666666666667, 0.05);
+
+	stmp1 = _mm_addsub_pd(l1, state0);
+	stmp1 = _mm_mul_pd(stmp1, l2);
+
+	//stmp1.m128d_f64[0] = (50.0000 - states[0]) * 0.05;
+	//stmp1.m128d_f64[1] = (states[0] + 5.00000) * -0.16666666666666666666666666666667;
+	stmp1 = _mm_add_pd(ones, fmath::exp_pd(stmp1));
 	stmp1 = _mm_div_pd(ones, stmp1);
 
-	stmp2.m128d_f64[0] = (-35.0000 - states[0]) * 0.07692307692307692307692307692308;
-	stmp2.m128d_f64[1] = (states[0] + 5.00000) * 0.2;
-	stmp2 = _mm_add_pd(ones, _mm_exp_pd(stmp2));
+	l1 = _mm_set_pd(5.00000, -35.0000);
+	l2 = _mm_set_pd(0.2, 0.07692307692307692307692307692308);
+
+	stmp2 = _mm_addsub_pd(l1, state0);
+	stmp2 = _mm_mul_pd(stmp2, l2);
+
+	//stmp2.m128d_f64[0] = (-35.0000 - states[0]) * 0.07692307692307692307692307692308;
+	//stmp2.m128d_f64[1] = (states[0] + 5.00000) * 0.2;
+	stmp2 = _mm_add_pd(ones, fmath::exp_pd(stmp2));
 	stmp2 = _mm_div_pd(_mm_set1_pd(1.40000), stmp2);
 
-	double algebraic7 = stmp1.m128d_f64[0];
+	double algebraic7 = stmp1.m128d_f64[1];
 	double algebraic21 = stmp2.m128d_f64[0] + 0.250000;
 	double algebraic28 = stmp2.m128d_f64[1];
-	double algebraic35 = stmp1.m128d_f64[1];
+	double algebraic35 = stmp1.m128d_f64[0];
 	double algebraic40 = algebraic21 * algebraic28 + algebraic35;
 	rates[14] = (algebraic7 - states[14]) / algebraic40;
 
-	stmp1.m128d_f64[0] = (states[0] + 20.0000) * 0.14285714285714285714285714285714;
-	stmp1.m128d_f64[1] = (states[0] + 30.0000) * 0.1;
-	stmp1 = _mm_add_pd(ones, _mm_exp_pd(stmp1));
+	//stmp1.m128d_f64[0] = (states[0] + 20.0000) * 0.14285714285714285714285714285714;
+	//stmp1.m128d_f64[1] = (states[0] + 30.0000) * 0.1;
+
+	l1 = _mm_set_pd(30.0000, 20.0000);
+	l2 = _mm_set_pd(0.1, 0.14285714285714285714285714285714);
+
+	stmp1 = _mm_add_pd(state0, l1);
+	stmp1 = _mm_mul_pd(stmp1, l2);
+	stmp1 = _mm_add_pd(ones, fmath::exp_pd(stmp1));
 	stmp1 = _mm_div_pd(ones, stmp1);
 
-	stmp.m128d_f64[0] = (13.0000 - states[0]) * 0.1;
-	stmp.m128d_f64[1] = (states[0] + 35.0000) * 0.14285714285714285714285714285714;
-	stmp = _mm_exp_pd(stmp);
+	//stmp.m128d_f64[0] = (13.0000 - states[0]) * 0.1;
+	//stmp.m128d_f64[1] = (states[0] + 35.0000) * 0.14285714285714285714285714285714;
+
+	l1 = _mm_set_pd(35.0000, 13.0000);
+	l2 = _mm_set_pd(0.14285714285714285714285714285714, 0.1);
+
+	stmp = _mm_addsub_pd(l1, state0);
+	stmp = _mm_mul_pd(stmp, l2);
+	stmp = fmath::exp_pd(stmp);
 	stmp = _mm_add_pd(ones, stmp);
 	
-	tmp = (states[0] + 27.0000) * 0.06666666666666666666666666666667;
-	ltmp = states[0] + 25.0000;
-	stmp3.m128d_f64[0] = -(tmp*tmp);
-	stmp3.m128d_f64[1] = -(ltmp*ltmp) * 0.00588235294117647058823529411765;
-	stmp3 = _mm_exp_pd(stmp3);
+	l1 = _mm_set_pd(25.0000, 27.0000);
+	l2 = _mm_set_pd(-0.00588235294117647058823529411765, -0.00444444444444444444444444444444);
+
+	//tmp = (states[0] + 27.0000);
+	//ltmp = states[0] + 25.0000;
+	//stmp3.m128d_f64[0] = (tmp*tmp) * -0.00444444444444444444444444444444;
+	//stmp3.m128d_f64[1] = (ltmp*ltmp) * -0.00588235294117647058823529411765;
+
+	stmp3 = _mm_add_pd(state0, l1);
+	stmp3 = _mm_mul_pd(stmp3, stmp3);
+	stmp3 = _mm_mul_pd(stmp3, l2);
+	stmp3 = fmath::exp_pd(stmp3);
 
 	double algebraic8 = stmp1.m128d_f64[0];
 	double algebraic22 = 1102.50*stmp3.m128d_f64[0];
@@ -681,144 +951,462 @@ void computeRates(double VoI, double* constants, double *data, double* rates, do
 	double algebraic36 = 180.000 * etmp1 + 20.0000;
 	double algebraic41 = algebraic22 + algebraic29 + algebraic36;
 	rates[15] = (algebraic8 - states[15]) / algebraic41;
+
 	double algebraic9 = 0.670000 / stmp.m128d_f64[1] + 0.330000;
 	double algebraic23 = 300.000*stmp3.m128d_f64[1];
 
 	stmp3.m128d_f64[0] = (25.0000 - states[0]) * 0.1;
 	stmp3.m128d_f64[1] = states[0] * constants[108];
-	stmp3 = _mm_exp_pd(stmp3);
+	stmp3 = fmath::exp_pd(stmp3);
+
+	stmp5 = _mm_loaddup_pd(&stmp3.m128d_f64[1]);
 
 	double algebraic30 = 31.0000 / (1.00000 + stmp3.m128d_f64[0]);
 	double etmpx = stmp3.m128d_f64[1];
 	double algebraic37 = 16.0000 * etmp1;
 	double algebraic42 = algebraic23 + algebraic30 + algebraic37;
 	rates[16] = (algebraic9 - states[16]) / algebraic42;
-	rates[24] = constants[83] * states[23] * (constants[90] - states[24]) - constants[76] * states[24];
-	rates[31] = constants[97] * states[12] * (constants[119] - states[31]) - constants[95] * states[31];
-	rates[25] = constants[84] * states[23] * ((constants[91] - states[25]) - states[26]) - constants[77] * states[25];
+
 	rates[39] = constants[104] * states[19] * (constants[123] - states[39]) - constants[103] * states[39];
-	rates[32] = constants[97] * states[13] * (constants[120] - states[32]) - constants[95] * states[32];
-	rates[26] = data[6] * ((constants[91] - states[25]) - states[26]) - constants[78] * states[26];
+
 	double algebraic86 = constants[70] * states[21] * (states[19] - states[12]);
 	double algebraic89 = 5.34800e-06*(states[19] - states[12]);
 
 	__m128d ptmp1;
 	ptmp1.m128d_f64[0] = states[23] / constants[71];
 	ptmp1.m128d_f64[1] = states[19] / constants[72];
-	ptmp1 = _mm_pow_pd(ptmp1, _mm_set1_pd(constants[74]));
+	ptmp1 = fmath::gmx_mm_pow_pd(ptmp1, _mm_set1_pd(constants[74]));
 
 	double algebraic88 = (constants[73] * (ptmp1.m128d_f64[0] - ptmp1.m128d_f64[1])) / (1.00000 + ptmp1.m128d_f64[0] + ptmp1.m128d_f64[1]);
 	rates[19] = (algebraic88 - ((algebraic89*constants[113]) / constants[117] + algebraic86)) - rates[39];
-	rates[33] = constants[98] * states[12] * (constants[121] - states[33]) - constants[96] * states[33];
-	rates[27] = constants[86] * states[23] * (constants[92] - states[27]) - constants[79] * states[27];
-	rates[34] = constants[98] * states[13] * (constants[122] - states[34]) - constants[96] * states[34];
+
+	rates[24] = constants[83] * states[23] * (constants[90] - states[24]) - constants[76] * states[24];
+	rates[25] = constants[84] * states[23] * ((constants[91] - states[25]) - states[26]) - constants[77] * states[25];
+	rates[26] = data[6] * ((constants[91] - states[25]) - states[26]) - constants[78] * states[26];
+	rates[27] = constants[86] * states[23] * (constants[92] - states[27]) - constants[79] * states[27];	
 	rates[28] = constants[87] * states[23] * ((constants[93] - states[28]) - states[29]) - constants[80] * states[28];
 	rates[29] = data[7] * ((constants[93] - states[28]) - states[29]) - constants[81] * states[29];
 	rates[30] = constants[89] * states[23] * (constants[94] - states[30]) - constants[82] * states[30];
+	rates[31] = constants[97] * states[12] * (constants[119] - states[31]) - constants[95] * states[31];
+	rates[32] = constants[97] * states[13] * (constants[120] - states[32]) - constants[95] * states[32];
+	rates[33] = constants[98] * states[12] * (constants[121] - states[33]) - constants[96] * states[33];
+	rates[34] = constants[98] * states[13] * (constants[122] - states[34]) - constants[96] * states[34];
+	rates[35] = data[0] * (states[5] - states[35]); //z dupy taki
 	rates[36] = constants[102] * states[4] * (constants[99] - states[36]) - constants[101] * states[36];
 	rates[37] = constants[102] * states[5] * (constants[100] - states[37]) - constants[101] * states[37];
 	double algebraic92 = rates[24] + rates[25] + rates[26] + rates[27] + rates[28] + rates[29] + rates[30];
 	rates[23] = ((-algebraic88*constants[117])*data[8] - algebraic92) + data[9] * (states[13] - states[23]);
-	double rtmp = 1.0 / states[4];
-	double algebraic93 = (1.00000 / constants[108])*log(constants[20] * rtmp);
-	double algebraic94 = constants[17] * constants[8] * constants[16] * (states[1] * states[1] * states[1])*states[2] * states[3] * (states[0] - algebraic93);
-	double algebraic95 = constants[19] * constants[8] * constants[18] * (states[0] - algebraic93);
-	double etmp2 = 1.0 / (etmpx - 1.00000);
-	double algebraic24 = 1.00000 / (1.00000 + 0.124500*exp(-0.100000*states[0] * constants[108]) + 0.0365000*constants[112] * exp(-states[0] * constants[108]));
-	tmp = constants[24] * rtmp;
-	double algebraic31 = (constants[25] * constants[8] * constants[21] * algebraic24 * constants[22]) / ((1.00000 + (tmp*tmp*tmp*tmp))*(constants[22] + constants[23]));
-	double algebraic63 = (constants[46] * states[0] * constants[2] * constants[108] * (states[4] * etmpx - constants[20])) * etmp2;
-	double algebraic69 = constants[48] * constants[9] * algebraic63 * states[14] * states[15] * states[16] * (1.00000 - states[17]);
-	tmp = constants[49] / states[12];
-	tmp1 = states[4] * states[4] * states[4];
-	double algebraic71 = 1.00000 / (1.00000 + (tmp*tmp));
-	double ctmp = exp(constants[55] * states[0] * constants[108])*constants[44];
-	double algebraic75 = ctmp * tmp1;
-	tmp2 = (constants[20] * constants[20] * constants[20]);
-	double tmp4a = exp((constants[55] - 1.00000)*states[0] * constants[108]);
-	double tmp5 = tmp4a*tmp2;
-	double algebraic77 = tmp5*states[12];
-	tmp = states[4] / constants[52];
-	double tmp3 = constants[53] * constants[53] * constants[53];
-	double algebraic79 = constants[50] * tmp2*(1.00000 + (tmp*tmp*tmp)) + tmp3*states[12] * (1.00000 + states[12] / constants[50]) + constants[51] * tmp1 + tmp1*constants[44] + tmp2*states[12];
-	double algebraic81 = (constants[57] * constants[8] * constants[56] * algebraic71 * (algebraic75 - algebraic77)) / (algebraic79 * (1.00000 + constants[54] * tmp4a));
-	double algebraic96 = algebraic94 + algebraic95 + 3.00000*algebraic81 + 3.00000*algebraic31 + algebraic69;
-	rates[4] = ((-algebraic96*constants[3]) / (constants[118] * constants[2]) + (constants[14] / constants[118])*(states[5] - states[4])) - rates[36];
-	double algebraic97 = (1.00000 / constants[108])*log(constants[20] / states[5]);
-	tmp = states[1] * states[1] * states[1];
-	double algebraic98 = constants[17] * constants[109] * constants[16] * tmp*states[2] * states[3] * (states[0] - algebraic97);
-	double algebraic100 = constants[19] * constants[109] * constants[18] * (states[0] - algebraic97);
-	tmp = constants[24] / states[5];
-	double algebraic38 = (constants[25] * constants[109] * constants[21] * algebraic24 * constants[22]) / ((1.00000 + (tmp*tmp*tmp*tmp))*(constants[22] + constants[23]));
-	double algebraic64 = (constants[46] * states[0] * constants[2] * constants[108] * (states[5] *etmpx - constants[20])) * etmp2;
-	double algebraic70 = constants[48] * constants[110] * algebraic64 * states[14] * states[15] * states[16] * (1.00000 - states[18]);
-	tmp = constants[49] / states[13];
-	double algebraic73 = 1.00000 / (1.00000 + (tmp*tmp));
-	tmp1 = states[5] * states[5] * states[5];
-	double algebraic76 =exp(constants[55] * states[0] * constants[108])*tmp1*constants[44]; 
-	double algebraic78 = tmp5*states[13];
-	tmp = states[5] / constants[52];
-	double algebraic80 = constants[50] * tmp2*(1.00000 + (tmp*tmp*tmp)) + tmp3*states[13] * (1.00000 + states[13] / constants[50]) + constants[51] * tmp1 + tmp1*constants[44] + tmp2*states[13];
-	double algebraic82 = (constants[57] * constants[109] * constants[56] * algebraic73 * (algebraic76 - algebraic78)) / (algebraic80 * (1.00000 + constants[54] * tmp4a));
-	double algebraic102 = algebraic98 + algebraic100 + 3.00000*algebraic82 + 3.00000*algebraic38 + algebraic70;
-	rates[5] = ((-algebraic102*constants[3]) / (constants[116] * constants[2]) + (constants[14] / constants[116])*(states[4] - states[5]) + (constants[15] / constants[116])*(states[35] - states[5])) - rates[37];
+
+	l1 = _mm_loaddup_pd(&data[14]);
+	l2 = _mm_loaddup_pd(&data[15]);
+	log1 = fmath::gmx_mm_log_pd(_mm_loadu_pd(&states[4]));
+
+	stmp3 = _mm_sub_pd(l2, log1);
+	stmp3 = _mm_mul_pd(l1, stmp3);
+	stmp3 = _mm_sub_pd(state0, stmp3);
+
+	//double algebraic93 = data[14] * (data[15] - log1.m128d_f64[0]);
+	//double algebraic94 = data[18] * (states[1] * states[1] * states[1])*states[2] * states[3] * (states[0] - algebraic93);
+	//double algebraic95 = data[20] * (states[0] - algebraic93);
+
+	__m128d t1, t2, t3, a1;
+	t1 = _mm_loaddup_pd(&states[1]);
+	t2 = _mm_loaddup_pd(&states[2]);
+	t3 = _mm_loaddup_pd(&states[3]);
+
+	l1 = _mm_loadu_pd(&data[18]);
+	l2 = _mm_loadu_pd(&data[20]);
+
+	t2 = _mm_mul_pd(t2, t3);
+	a1 = _mm_mul_pd(t1, t1);
+	a1 = _mm_mul_pd(a1, t1);
+	a1 = _mm_mul_pd(a1, t2);
+
+	a1 = _mm_mul_pd(a1, stmp3);
+	a1 = _mm_mul_pd(a1, l1);
+
+	t2 = _mm_mul_pd(l2, stmp3);
+	stmp3 = _mm_add_pd(t2, a1);
+
+	//double etmp2 = 1.0 / (etmpx - 1.00000);
+
+	l1 = _mm_set_pd(-1.0, -0.100000);
+	l2 = _mm_loaddup_pd(&constants[108]);
+
+	stmp = _mm_mul_pd(state0, l2);
+	stmp4 = stmp;
+	stmp = _mm_mul_pd(stmp, l1);
+
+	//stmp.m128d_f64[0] = -0.100000*states[0] * constants[108];
+	//stmp.m128d_f64[1] = -states[0] * constants[108];
+	stmp = fmath::exp_pd(stmp);
+	stmp = _mm_mul_pd(stmp, _mm_loadu_pd(&data[26]));
+	stmp = _mm_hadd_pd(stmp, stmp);
+	stmp = _mm_add_pd(stmp, ones);
+
+	l1 = _mm_loadu_pd(&states[4]);
+	stmp2 = _mm_mul_pd(l1, l1);
+	stmp2 = _mm_mul_pd(stmp2, l1);
+
+	//stmp4.m128d_f64[0] = constants[55] * states[0] * constants[108];
+	//stmp4.m128d_f64[1] = (constants[55] - 1.00000)*states[0] * constants[108];
+	//stmp4 = _mm_exp_pd(stmp4);
+	stmp4 = _mm_mul_pd(stmp4, _mm_loadu_pd(&data[30]));
+	stmp4 = fmath::exp_pd(stmp4);
+
+	l2 = _mm_mul_pd(stmp2, l1);
+	l2 = _mm_div_pd(_mm_loaddup_pd(&data[28]), l2);
+	l2 = _mm_add_pd(ones, l2);
+	l2 = _mm_mul_pd(_mm_loaddup_pd(&data[29]), l2);
+	stmp1 = _mm_mul_pd(stmp, l2);
+	stmp1 = _mm_div_pd(_mm_loadu_pd(&data[22]), stmp1);
+
+	stmp6 = _mm_mul_pd(l1, stmp5);
+	stmp6 = _mm_sub_pd(stmp6, _mm_loaddup_pd(&constants[20]));
+	stmp6 = _mm_mul_pd(stmp6, state0);
+	stmp6 = _mm_mul_pd(stmp6, _mm_loadu_pd(&data[24]));
+	stmp6 = _mm_div_pd(stmp6, _mm_sub_pd(stmp5, ones));
+	
+	//tmp1 = states[4] * states[4] * states[4];
+	//tmp = data[28] / (tmp1 * states[4]);
+	//double algebraic24 = 1.00000 / stmp.m128d_f64[0];
+	//double algebraic31 = (data[22] * algebraic24) / ((1.00000 + tmp)*data[29]);
+	//double algebraic63 = (data[24] * states[0] * (states[4] * etmpx - constants[20])) * etmp2;
+	//double algebraic69 = data[34] * algebraic63 * states[14] * states[15] * states[16] * (1.00000 - states[17]);
+
+	gtmp1 = _mm_mul_pd(_mm_loaddup_pd(&states[15]), _mm_loaddup_pd(&states[14]));
+	gtmp1 = _mm_mul_pd(gtmp1, _mm_loaddup_pd(&states[16]));
+	stmp6 = _mm_mul_pd(stmp6, gtmp1);
+	stmp6 = _mm_mul_pd(stmp6, _mm_sub_pd(ones, _mm_loadu_pd(&states[17])));
+	stmp6 = _mm_mul_pd(stmp6, _mm_loadu_pd(&data[34]));
+	stmp3 = _mm_add_pd(stmp3, stmp6);
+
+	l2 = _mm_loaddup_pd(&stmp4.m128d_f64[1]);
+	l5 = _mm_loadu_pd(&states[12]);
+
+	stmp7 = _mm_div_pd(_mm_loaddup_pd(&constants[49]), l5);
+	stmp7 = _mm_mul_pd(stmp7, stmp7);
+	stmp7 = _mm_add_pd(stmp7, ones);
+
+	//tmp = constants[49] / states[12];
+	//double algebraic71 = 1.00000 / (1.00000 + (tmp*tmp));
+
+	///double tmp4a = stmp4.m128d_f64[1];
+	stmp4 = _mm_mul_pd(stmp4, _mm_loadu_pd(&data[32]));
+
+	stmp8 = _mm_loaddup_pd(&stmp4.m128d_f64[0]);
+	stmp8 = _mm_mul_pd(stmp8, stmp2);
+	stmp8 = _mm_sub_pd(stmp8, _mm_mul_pd(_mm_loaddup_pd(&stmp4.m128d_f64[1]), l5));
+	stmp8 = _mm_mul_pd(stmp8, _mm_loadu_pd(&data[36]));
+
+	//double ctmp = stmp4.m128d_f64[0] * constants[44];
+	//double algebraic75 = ctmp * tmp1;
+	//tmp2 = (constants[20] * constants[20] * constants[20]);
+	l3 = _mm_loaddup_pd(&data[33]);
+	//double tmp4a = stmp4.m128d_f64[1];
+	//double tmp5 = tmp4a*tmp2;
+	//double tmp5 = stmp4.m128d_f64[1];;
+	//double algebraic77 = tmp5*states[12];
+
+	l4 = _mm_mul_pd(l1, _mm_loaddup_pd(&data[38]));
+	stmp9 = _mm_mul_pd(l4, l4);
+	stmp9 = _mm_mul_pd(stmp9, l4);
+	stmp9 = _mm_add_pd(stmp9, ones);
+	stmp9 = _mm_mul_pd(stmp9, l3);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loaddup_pd(&constants[50]));
+
+	stmp10 = _mm_mul_pd(l5, _mm_loaddup_pd(&data[39]));
+	stmp10 = _mm_add_pd(stmp10, ones);
+	stmp10 = _mm_mul_pd(stmp10, _mm_mul_pd(l5, _mm_loaddup_pd(&data[40])));
+	stmp9 = _mm_add_pd(stmp9, stmp10);
+
+	stmp10 = _mm_mul_pd(stmp2, _mm_loaddup_pd(&constants[51]));
+	stmp10 = _mm_add_pd(stmp10, _mm_mul_pd(stmp2, _mm_loaddup_pd(&constants[44])));
+	stmp9 = _mm_add_pd(stmp9, stmp10);
+
+	stmp10 = _mm_mul_pd(l3, l5);
+	stmp9 = _mm_add_pd(stmp10, stmp9);
+	stmp7 = _mm_mul_pd(stmp7, stmp9);
+
+	stmp10 = _mm_mul_pd(l2, _mm_loaddup_pd(&constants[54]));
+	stmp10 = _mm_add_pd(stmp10, ones);
+	stmp7 = _mm_mul_pd(stmp7, stmp10);
+	stmp8 = _mm_div_pd(stmp8, stmp7);
+	stmp3 = _mm_add_pd(stmp3, _mm_mul_pd(_mm_set1_pd(3.0), _mm_add_pd(stmp1, stmp8)));
+	gtmp2 = stmp3;
+
+	//tmp = states[4] / constants[52];
+	//double tmp3 = constants[53] * constants[53] * constants[53];
+	//double algebraic79 = constants[50] * tmp2*(1.00000 + (tmp*tmp*tmp)) + tmp3*states[12] * (1.00000 + states[12] / constants[50]) + constants[51] * tmp1 + tmp1*constants[44] + tmp2*states[12];
+	//double algebraic81 = (data[36] * algebraic71 * (algebraic75 - algebraic77)) / (algebraic79 * (1.00000 + constants[54] * tmp4a));
+	//double algebraic96 = algebraic94 + algebraic95 + 3.00000*algebraic81 + 3.00000*algebraic31 + algebraic69;
+	//double algebraic96 = stmp3.m128d_f64[0];
+	//rates[4] = ((-algebraic96*constants[3]) / (constants[118] * constants[2]) + (constants[14] / constants[118])*(states[5] - states[4])) - rates[36];
+	
+	stmp10 = _mm_mul_pd(stmp3, _mm_loaddup_pd(&constants[3]));
+	stmp10 = _mm_mul_pd(stmp10, _mm_loadu_pd(&data[42]));
+
+	l2 = _mm_shuffle_pd(l1, l1, 0x01);
+	stmp9 = _mm_sub_pd(l2, l1);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loadu_pd(&data[44]));
+
+	stmp10 = _mm_add_pd(stmp10, stmp9);
+
+	stmp9 = _mm_sub_pd(_mm_loaddup_pd(&states[35]), l1);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loadu_pd(&data[46]));
+	stmp10 = _mm_add_pd(stmp10, stmp9);
+
+	stmp10 = _mm_sub_pd(stmp10, _mm_loadu_pd(&rates[36]));
+	_mm_storeu_pd(&rates[4], stmp10);
+
+	//rates[4] = (stmp10.m128d_f64[0]) - rates[36];
+	
+	//double algebraic97 = data[14] * (data[15] - log1.m128d_f64[1]);
+	//tmp = states[1] * states[1] * states[1];
+	//double algebraic98 = data[19] * tmp*states[2] * states[3] * (states[0] - algebraic97);
+	//double algebraic100 = data[21] * (states[0] - algebraic97);
+
+	//tmp1 = states[5] * states[5] * states[5];
+	//tmp = data[28] / (tmp1 * states[5]);
+	//double algebraic38 = (data[23] * algebraic24) / ((1.00000 + tmp)*data[29]);
+	//double algebraic64 = (data[25] * states[0] * (states[5] * etmpx - constants[20])) * etmp2;
+	//double algebraic70 = data[35] * algebraic64 * states[14] * states[15] * states[16] * (1.00000 - states[18]);
+	//tmp = constants[49] / states[13];
+	//double algebraic73 = 1.00000 / (1.00000 + (tmp*tmp));
+	//double algebraic76 = ctmp*tmp1; 
+	//double algebraic78 = tmp5*states[13];
+	//tmp = states[5] / constants[52];
+	//double algebraic80 = constants[50] * tmp2*(1.00000 + (tmp*tmp*tmp)) + tmp3*states[13] * (1.00000 + states[13] / constants[50]) + constants[51] * tmp1 + tmp1*constants[44] + tmp2*states[13];
+	//double algebraic82 = (data[37] * algebraic73 * (algebraic76 - algebraic78)) / (algebraic80 * (1.00000 + constants[54] * tmp4a));
+	//double algebraic102 = algebraic98 + algebraic100 + 3.00000*algebraic82 + 3.00000*algebraic38 + algebraic70;
+	//double algebraic102 = stmp3.m128d_f64[1];
+	//rates[5] = ((-algebraic102*constants[3]) / (constants[116] * constants[2]) + (constants[14] / constants[116])*(states[4] - states[5]) + (constants[15] / constants[116])*(states[35] - states[5])) - rates[37];
+	//rates[5] = (stmp10.m128d_f64[1] + (constants[15] / constants[116])*(states[35] - states[5])) - rates[37];
+	
 	double algebraic10 = (VoI - floor(VoI / constants[7])*constants[7] >= constants[4] && (VoI - floor(VoI / constants[7])*constants[7]) - constants[4] <= constants[6] ? constants[5] : 0.00000);
-	double algebraic43 = algebraic31 + algebraic38;
-	double algebraic44 = 1.00000 / (1.00000 + exp((states[0] + 74.0000) * 0.04166666666666666666666666666667));
+	//double algebraic43 = algebraic31 + algebraic38;
+
+	gtmp = _mm_add_pd(stmp1, stmp1);
+	//double algebraic43 = stmp1.m128d_f64[0] + stmp1.m128d_f64[1];
+
+	//stmp2.m128d_f64[0] = 7.48800 - states[0] * 0.16722408026755852842809364548495;
+	//stmp2.m128d_f64[1] = (states[0] + 74.0000) * 0.04166666666666666666666666666667;
+
+	//stmp2.m128d_f64[0] = 7.48800 - states[0] * 0.16722408026755852842809364548495;
+	//stmp2.m128d_f64[1] = 3.0833333333333333333333333333336 + states[0] * 0.04166666666666666666666666666667;
+
+	stmp2 = _mm_mul_pd(state0, _mm_set_pd(0.04166666666666666666666666666667, 0.16722408026755852842809364548495));
+	stmp2 = _mm_addsub_pd(_mm_set_pd(3.0833333333333333333333333333336, 7.48800), stmp2);
+	stmp2 = _mm_shuffle_pd(stmp2, stmp2, 0x01);
+	stmp2 = _mm_add_pd(ones, fmath::exp_pd(stmp2));
+
+	stmp10 = _mm_sub_pd(state0, _mm_loaddup_pd(&constants[114]));
+	stmp2 = _mm_div_pd(stmp10, stmp2);
+	stmp2 = _mm_mul_pd(stmp2, _mm_loadu_pd(&data[48]));
+	stmp2 = _mm_mul_sd(stmp2, _mm_load_sd(&states[6]));
+
+	//double algebraic44 = stmp2.m128d_f64[0];
 	double ptmp = data[10];
-	double algebraic45 = constants[27] * constants[26] * ptmp *states[6] * algebraic44 * (states[0] - constants[114]);
-	double algebraic104 = (1.00000 / constants[108])*log((constants[22] + constants[107] * constants[20]) / (constants[43] + constants[107] * states[35]));
-	tmp = states[7] * states[7];
-	double algebraic105 = constants[30] * constants[8] * constants[28] * tmp*(states[0] - algebraic104);
-	double algebraic106 = constants[30] * constants[109] * constants[29] * tmp*(states[0] - algebraic104);
-	double algebraic107 = algebraic105 + algebraic106;
-	double algebraic46 = 1.00000 / (1.00000 + exp(7.48800 - states[0] * 0.16722408026755852842809364548495));
-	double algebraic47 = constants[32] * constants[31] * algebraic46 * (states[0] - constants[114]);
-	double algebraic48 = constants[35] * constants[33] * states[8] * states[9] * (states[0] - constants[114]);
-	double algebraic49 = constants[35] * constants[34] * states[10] * states[11] * (states[0] - constants[114]);
-	double algebraic50 = algebraic48 + algebraic49;
-	double algebraic51 = 4.09380 / (1.00000 + exp(0.121650*((states[0] - constants[114]) - 49.9344)));
-	double algebraic52 = (15.7197*exp(0.0673900*((states[0] - constants[114]) - 3.25710)) + exp(0.0617500*((states[0] - constants[114]) - 594.310))) / (1.00000 + exp(-0.162850*((states[0] - constants[114]) + 14.2067)));
-	double algebraic53 = algebraic51 / (algebraic51 + algebraic52);
-	double algebraic54 = constants[37] * constants[36] * ptmp *algebraic53 * (states[0] - constants[114]);
-	double algebraic62 = (constants[47] * states[0] * constants[2] * constants[108] * (constants[43] * etmpx - constants[22])) / (etmpx - 1.00000);
-	double algebraic68 = constants[48] * algebraic62 * states[14] * states[15] * states[16] * (constants[9] * (1.00000 - states[17]) + constants[110] * (1.00000 - states[18]));
-	double algebraic108 = (((algebraic50 + algebraic45 + algebraic107 + algebraic54) - 2.00000*algebraic43) + algebraic68 + algebraic47) - algebraic10;
+	//double algebraic45 = constants[27] * constants[26] * ptmp *states[6] * algebraic44 * (states[0] - constants[114]);
+	//double algebraic45 = stmp2.m128d_f64[0];
+
+	stmp9 = _mm_loaddup_pd(&states[35]);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loaddup_pd(&constants[107]));
+	stmp9 = _mm_add_pd(stmp9, _mm_loaddup_pd(&constants[43]));
+	stmp9 = fmath::gmx_mm_log_pd(stmp9);
+	stmp9 = _mm_sub_pd(_mm_loaddup_pd(&data[16]), stmp9);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loaddup_pd(&data[14]));
+	stmp9 = _mm_sub_pd(state0, stmp9);
+
+	l1 = _mm_loaddup_pd(&states[7]);
+	l1 = _mm_mul_pd(l1, l1);
+
+	stmp9 = _mm_mul_pd(stmp9, l1);
+	stmp9 = _mm_mul_pd(stmp9, _mm_loadu_pd(&data[50]));
+
+	l1 = _mm_loadu_pd(&states[8]);
+	l2 = _mm_loadu_pd(&states[10]);
+
+	l3 = _mm_shuffle_pd(l1, l2, 0x00);
+	l4 = _mm_shuffle_pd(l1, l2, 0x03);
+
+	l1 = _mm_sub_pd(state0, _mm_loaddup_pd(&constants[114]));
+	stmp10 = _mm_mul_pd(l1, l3);
+	stmp10 = _mm_mul_pd(stmp10, l4);
+	stmp10 = _mm_mul_pd(stmp10, _mm_loadu_pd(&data[52]));
+
+	stmp10 = _mm_add_pd(stmp9, stmp10);
+	stmp10 = _mm_add_pd(stmp10, stmp2);
+	stmp10 = _mm_sub_pd(stmp10, gtmp);
+
+	//double algebraic104 = data[14]*(data[16] - log((constants[43] + constants[107] * states[35])));
+	//tmp = states[7] * states[7];
+	//double algebraic105 = data[50] * tmp*(states[0] - algebraic104);
+	//double algebraic106 = data[51] * tmp*(states[0] - algebraic104);
+	//double algebraic107 = algebraic105 + algebraic106;
+	//double algebraic107 = stmp10.m128d_f64[0];
+	//double algebraic46 = stmp2.m128d_f64[1];
+	//double algebraic47 = constants[32] * constants[31] * algebraic46 * (states[0] - constants[114]);
+	//double algebraic47 = stmp2.m128d_f64[1];
+	//double algebraic48 = data[52] * states[8] * states[9] * (states[0] - constants[114]);
+	//double algebraic49 = data[53] * states[10] * states[11] * (states[0] - constants[114]);
+	//double algebraic50 = algebraic48 + algebraic49;
+	//double algebraic50 = stmp10.m128d_f64[1];
+
+	l2 = _mm_addsub_pd(l1, _mm_set_pd(14.2067, 49.9344));
+	stmp = _mm_mul_pd(l2, _mm_set_pd(-0.162850, 0.121650));
+
+	//stmp.m128d_f64[0] = 0.121650*((states[0] - constants[114]) - 49.9344);
+	//stmp.m128d_f64[1] = -0.162850*((states[0] - constants[114]) + 14.2067);
+	stmp = fmath::exp_pd(stmp);
+	stmp = _mm_add_pd(ones, stmp);
+
+	l2 = _mm_sub_pd(l1, _mm_set_pd(594.310, 3.25710));
+	stmp1 = _mm_mul_pd(l2, _mm_set_pd(0.0617500, 0.0673900));
+	//stmp1.m128d_f64[0] = 0.0673900*((states[0] - constants[114]) - 3.25710);
+	//stmp1.m128d_f64[1] = 0.0617500*((states[0] - constants[114]) - 594.310);
+	stmp1 = fmath::exp_pd(stmp1);
+	stmp1 = _mm_mul_pd(stmp1, _mm_set_sd(15.7197));
+
+	stmp1 = _mm_hadd_pd(_mm_set_sd(4.09380), stmp1);
+	stmp1 = _mm_div_pd(stmp1, stmp);
+
+	//double algebraic51 = 4.09380 / stmp.m128d_f64[0];
+	//double algebraic52 = (15.7197*stmp1.m128d_f64[0] + stmp1.m128d_f64[1]) / stmp.m128d_f64[1];
+
+	//double algebraic51 = stmp1.m128d_f64[0];
+	//double algebraic52 = stmp1.m128d_f64[1];
+
+	l2 = _mm_hadd_pd(stmp1, stmp1);
+	l2 = _mm_div_sd(stmp1, l2);
+	l2 = _mm_mul_sd(l2, l1);
+	l2 = _mm_mul_sd(l2, _mm_load_sd(&data[54]));
+	stmp10 = _mm_add_sd(stmp10, l2);
+
+	stmp5 = _mm_loaddup_pd(&etmpx);
+	stmp3 = _mm_mul_pd(stmp5, stmp5);
+
+	stmp6 = _mm_load_sd(&constants[43]);
+
+	stmp6 = _mm_mul_pd(stmp6, stmp5);
+	stmp6 = _mm_sub_pd(stmp6, _mm_loadu_pd(&data[58]));
+
+	stmp6 = _mm_mul_pd(stmp6, state0);
+	stmp6 = _mm_mul_pd(stmp6, _mm_loadu_pd(&data[56]));
+
+	stmp5 = _mm_sub_pd(stmp5, ones);
+	stmp6 = _mm_div_sd(stmp6, stmp5);
+	stmp6 = _mm_mul_pd(stmp6, gtmp1);
+
+	stmp5 = _mm_sub_pd(ones, _mm_loaddup_pd(&states[17]));
+	stmp5 = _mm_mul_sd(stmp5, _mm_load1_pd(&constants[9]));
+
+	stmp7 = _mm_sub_pd(ones, _mm_loaddup_pd(&states[18]));
+	stmp7 = _mm_mul_sd(stmp7, _mm_load1_pd(&constants[110]));
+	stmp5 = _mm_add_sd(stmp5, stmp7);
+
+	stmp6 = _mm_mul_pd(stmp6, stmp5);
+	stmp10 = _mm_add_sd(stmp10, stmp6);
+
+	//double algebraic53 = algebraic51 / (algebraic51 + algebraic52);
+	//double algebraic54 = data[54] *algebraic53 * (states[0] - constants[114]);
+	//double algebraic62 = (data[56] * states[0] * (constants[43] * etmpx - constants[22])) / (etmpx - 1.00000);
+	//double algebraic68 = algebraic62 * states[14] * states[15] * states[16] * (constants[9] * (1.00000 - states[17]) + constants[110] * (1.00000 - states[18]));
+	//double algebraic108 = (((algebraic50 + algebraic45 + algebraic107 + algebraic54) - 2.00000*algebraic43) + algebraic68 + algebraic47) - algebraic10;
+	double algebraic108 = (stmp10.m128d_f64[0] + stmp10.m128d_f64[1]) - algebraic10;
 	rates[38] = algebraic108;
-	double etmpx2 = etmpx*etmpx;
-	double algebraic60 = (constants[45] * states[0] * constants[2] * constants[108] * (states[12] * etmpx2 - constants[44])) / (etmpx2 - 1.00000);
-	double algebraic65 = constants[48] * constants[9] * algebraic60 * states[14] * states[15] * states[16] * (1.00000 - states[17]);
-	double ptmp2 = data[11];
 
-	ptmp1.m128d_f64[0] = states[12];
-	ptmp1.m128d_f64[1] = states[13];
-	ptmp1 = _mm_pow_pd(ptmp1, _mm_set1_pd(1.60000));
+	l1 = _mm_loadu_pd(&states[12]);
 
-	ptmp = ptmp1.m128d_f64[0];
-	double algebraic83 = (constants[60] * constants[8] * constants[59] * ptmp) / (ptmp2 + ptmp);
-	double algebraic109 = (1.00000 / (2.00000*constants[108]))*log(constants[44] / states[12]);
-	double algebraic110 = constants[62] * constants[8] * constants[61] * (states[0] - algebraic109);
-	double algebraic111 = (algebraic65 + algebraic110 + algebraic83) - (algebraic81+algebraic81);
-	double algebraic90 = rates[31] + rates[33];
-	rates[12] = (((-algebraic111*constants[3])*data[1] + data[3] * (states[13] - states[12])) - algebraic90) + (algebraic86*constants[117]) / constants[118] + (algebraic89*constants[113]) / constants[118];
-	double algebraic61 = (constants[45] * states[0] * constants[2] * constants[108] * (states[13] * etmpx2 - constants[44])) / (etmpx2 - 1.00000);
-	double algebraic66 = constants[48] * constants[110] * algebraic61 * states[14] * states[15] * states[16] * (1.00000 - states[18]);
-	ptmp = ptmp1.m128d_f64[1];
-	double algebraic85 = (constants[60] * constants[109] * constants[59] * ptmp) / (ptmp2 + ptmp);
-	double algebraic112 = (1.00000 / (2.00000*constants[108]))*log(constants[44] / states[13]);
-	double algebraic113 = constants[62] * constants[109] * constants[61] * (states[0] - algebraic112);
-	double algebraic114 = (algebraic66 + algebraic113 + algebraic85) - (algebraic82+algebraic82);
-	double algebraic91 = rates[32] + rates[34];
-	rates[13] = ((-algebraic114*constants[3])*data[2] + data[4] * (states[12] - states[13]) + (constants[13] / constants[116])*(states[23] - states[13])) - algebraic91;
-	double algebraic103 = algebraic96 + algebraic102;
+	stmp5 = _mm_mul_pd(stmp3, l1);
+	stmp5 = _mm_sub_pd(stmp5, _mm_loaddup_pd(&constants[44]));
+	stmp5 = _mm_div_pd(stmp5, _mm_sub_pd(stmp3, ones));
+	stmp5 = _mm_mul_pd(stmp5, state0);
+	stmp5 = _mm_mul_pd(stmp5, _mm_loadu_pd(&data[64]));
+	stmp5 = _mm_mul_pd(stmp5, gtmp1);
+	stmp5 = _mm_mul_pd(stmp5, _mm_sub_pd(ones, _mm_loadu_pd(&states[17])));
+
+	//double etmpx2 = etmpx*etmpx;
+	//double algebraic60 = (data[64] * states[0] * (states[12] * etmpx2 - constants[44])) / (etmpx2 - 1.00000);
+	//double algebraic65 = algebraic60 * states[14] * states[15] * states[16] * (1.00000 - states[17]);
+	//double algebraic65 = stmp6.m128d_f64[1];
+	//double ptmp2 = data[11];
+
+	//ptmp1.m128d_f64[0] = states[12];
+	//ptmp1.m128d_f64[1] = states[13];
+
+	ptmp1 = fmath::gmx_mm_pow_pd(l1, _mm_set1_pd(1.60000));
+	log1 = fmath::gmx_mm_log_pd(l1);
+
+	//ptmp = ptmp1.m128d_f64[0];
+	
+	l3 = _mm_mul_pd(ptmp1, _mm_loadu_pd(&data[60]));
+	l2 = _mm_add_pd(ptmp1, _mm_loaddup_pd(&data[11]));
+	stmp1 = _mm_div_pd(l3, l2);
+	
+	stmp2 = _mm_sub_pd(_mm_loaddup_pd(&data[13]), log1);
+	stmp2 = _mm_mul_pd(stmp2, _mm_loaddup_pd(&data[12]));
+	stmp2 = _mm_sub_pd(state0, stmp2);
+	stmp2 = _mm_mul_pd(stmp2, _mm_loadu_pd(&data[62]));
+	stmp2 = _mm_add_pd(stmp2, stmp1);
+
+	stmp8 = _mm_add_pd(stmp8, stmp8);
+	stmp1 = _mm_sub_pd(stmp2, stmp8);
+	stmp1 = _mm_add_pd(stmp1, stmp5);
+	
+	stmp2 = _mm_add_pd(stmp1, gtmp2);
+	stmp1 = _mm_mul_pd(stmp1, _mm_loadu_pd(&data[1]));
+
+	l2 = _mm_shuffle_pd(l1, l1, 0x01);
+	stmp3 = _mm_sub_pd(l2, l1);
+	stmp3 = _mm_mul_pd(stmp3, _mm_loadu_pd(&data[3]));
+	stmp1 = _mm_add_pd(stmp1, stmp3);
+
+	stmp3 = _mm_add_pd(_mm_loadu_pd(&rates[31]), _mm_loadu_pd(&rates[33]));
+	stmp1 = _mm_sub_pd(stmp1, stmp3);
+
+	//double algebraic83 = (constants[60] * constants[8] * constants[59] * ptmp) / (ptmp2 + ptmp);
+	//double algebraic109 = data[12] * (data[13] - log1.m128d_f64[0]);
+	//double algebraic110 = constants[62] * constants[8] * constants[61] * (states[0] - algebraic109);
+	//double algebraic111 = (algebraic65 + algebraic110 + algebraic83) - (algebraic81+algebraic81);
+	//double algebraic90 = rates[31] + rates[33];
+	//rates[12] = ((algebraic111*data[1] + data[3] * (states[13] - states[12])) - algebraic90) + (algebraic86*constants[117]) / constants[118] + (algebraic89*constants[113]) / constants[118];
+	rates[12] = stmp1.m128d_f64[0] + (algebraic86*constants[117]) / constants[118] + (algebraic89*constants[113]) / constants[118];
+	
+	//double algebraic61 = (data[65] * states[0] * (states[13] * etmpx2 - constants[44])) / (etmpx2 - 1.00000);
+	//double algebraic66 = algebraic61 * states[14] * states[15] * states[16] * (1.00000 - states[18]);
+	//ptmp = ptmp1.m128d_f64[1];
+
+	//double algebraic85 = (constants[60] * constants[109] * constants[59] * ptmp) / (ptmp2 + ptmp);
+	//double algebraic112 = data[12] * (data[13] - log1.m128d_f64[1]);
+	//double algebraic113 = constants[62] * constants[109] * constants[61] * (states[0] - algebraic112);
+	//double algebraic114 = (algebraic66 + algebraic113 + algebraic85) - (algebraic82+algebraic82);
+	//double algebraic91 = rates[32] + rates[34];
+	//rates[13] = (algebraic114*data[2] + data[4] * (states[12] - states[13]) + (constants[13] / constants[116])*(states[23] - states[13])) - algebraic91;
+	rates[13] = (stmp1.m128d_f64[1] + (constants[13] / constants[116])*(states[23] - states[13]));
+
+	stmp3 = _mm_sub_pd(state0, _mm_loaddup_pd(&constants[115]));
+
+	stmp4 = _mm_div_pd(_mm_loaddup_pd(&constants[39]), l1);
+	stmp4 = _mm_add_pd(stmp4, ones);
+	stmp4 = _mm_div_pd(_mm_loadu_pd(&data[66]), stmp4);
+	stmp4 = _mm_mul_pd(stmp4, stmp3);
+	stmp2 = _mm_add_pd(stmp2, stmp4);
+
+	stmp2 = _mm_hadd_pd(stmp2, stmp2);
+
+	//double algebraic103 = algebraic96 + algebraic102;
 	tmp = (states[0] - constants[115]);
-	double algebraic55 = ((constants[40] * constants[8] * constants[38]) / (1.00000 + constants[39] / states[12]))*tmp;
-	double algebraic56 = ((constants[40] * constants[109] * constants[38]) / (1.00000 + constants[39] / states[13]))*tmp;
-	double algebraic57 = algebraic55 + algebraic56;
+	//double algebraic55 = ((constants[40] * constants[8] * constants[38]) / (1.00000 + constants[39] / states[12]))*tmp;
+	//double algebraic56 = ((constants[40] * constants[109] * constants[38]) / (1.00000 + constants[39] / states[13]))*tmp;
+	//double algebraic57 = algebraic55 + algebraic56;
 	double algebraic58 = constants[42] * constants[41] * tmp;
-	double algebraic59 = algebraic57 + algebraic58;
-	double algebraic116 = algebraic111 + algebraic114;
-	double algebraic117 = algebraic103 + algebraic59 + algebraic116 + algebraic108;
+	//double algebraic59 = algebraic57 + algebraic58;
+	double algebraic59 = algebraic58;
+	//double algebraic116 = algebraic111 + algebraic114;
+	double algebraic116 = stmp2.m128d_f64[0];
+	double algebraic117 = algebraic59 + algebraic116 + algebraic108;
+	//double algebraic117 = algebraic103 + algebraic59 + algebraic116 + algebraic108;
 	rates[0] = -algebraic117;
 
 }

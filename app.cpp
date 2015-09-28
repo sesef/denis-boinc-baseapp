@@ -25,7 +25,7 @@ int main() {
 
 	initBoinc();
 
-	fprintf(stderr, "Optimized by Sesef v1.4.1 2015\n");
+	fprintf(stderr, "Optimized by Sesef v1.5.5 (SSE3) 2015\n");
 
 	getFilePaths(input_path, output_path, buffSize);
 

@@ -288,12 +288,7 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 
 	for (; it <= lastIteration; it++) {
 
-		if ((it % 0x80000) == 0)
-		{
-			double frac = double(it) * last;
-		//	printf("Progress %f\n", frac);
-			boinc_fraction_done(frac);
-		}
+		
 
 		VOI = dt * it; //Integration variable, in this case, time
 		computeRates(VOI, CONSTANTS, precomp, RATES, STATES);
@@ -309,17 +304,23 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 
 		}
 
-		if (boinc_time_to_checkpoint()) {
-			retval = do_checkpoint(rat_length, it, buffSize, STATES);
-			if (retval) {
-				fprintf(stderr,
-						"DENIS: checkpoint failed at Iteration %d , retval%d\n",
-						(int) it, retval);
-				exit(1);
-			}
-			boinc_checkpoint_completed();
-		}
+		if ((it % 0x80000) == 0)
+		{
+			double frac = double(it) * last;
+			//	printf("Progress %f\n", frac);
+			boinc_fraction_done(frac);
 
+			if (boinc_time_to_checkpoint()) {
+				retval = do_checkpoint(rat_length, it, buffSize, STATES);
+				if (retval) {
+					fprintf(stderr,
+						"DENIS: checkpoint failed at Iteration %d , retval%d\n",
+						(int)it, retval);
+					exit(1);
+				}
+				boinc_checkpoint_completed();
+			}
+		}
 	}
 
 }
