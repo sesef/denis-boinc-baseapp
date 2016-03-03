@@ -38,7 +38,7 @@
 #include <fstream>
 #include <stdio.h>
 #include <math.h>
-#include "model.h"
+#include "models.h"
 #include "config.h"
 
 /* INPUT OUTPUT INCLUDES */
@@ -69,7 +69,7 @@ std::vector<std::string> string_split(const std::string &s, char delim) {
 	return elems;
 }
 
-int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
+int do_checkpoint(int rat_length, int alg_length,long it, const int buffSize, double* STATES, double* ALGEBRAIC) {
 	string resolved_name;
 	char chkpt_path[buffSize];
 
@@ -96,17 +96,23 @@ int do_checkpoint(int rat_length, long it, const int buffSize, double* STATES) {
 				sizeof(double));
 	}
 
+
+	for (int algIterator = 0; algIterator < alg_length; algIterator++) {
+		checkpointFile.write(reinterpret_cast<char *>(&ALGEBRAIC[algIterator]),
+				sizeof(double));
+	}
+
+
 	checkpointFile.close();
 	return 0;
 }
 
-void loadDataFromCheckPoint(long* it, int rat_length, const int buffSize,
-		double* STATES) {
+int loadDataFromCheckPoint(int rat_length,int alg_length, const int buffSize,
+		double* STATES,double* ALGEBRAIC) {
 	char chkpt_path[buffSize];
-	double * TEMP_STATES = new double[rat_length];
 	std::string line;
+	long it = 0;
 
-	it = 0;
 
 	int rc = boinc_resolve_filename(CHECKPOINT_FILE, chkpt_path, buffSize);
 	if (rc) {
@@ -117,28 +123,37 @@ void loadDataFromCheckPoint(long* it, int rat_length, const int buffSize,
 
 	FILE* state = boinc_fopen(chkpt_path, "r");
 	if (!state || appData.wu_cpu_time == 0){
-		return;
+		return int(it);
 	}else{
 		fclose(state);
 	}
 
 
 	fstream checkpointFile(chkpt_path, ios::in | ios::binary);
-	std::vector<double> STATES_BK (STATES, STATES + rat_length);
 
 	try{
 		checkpointFile.read(reinterpret_cast<char *>(&it), sizeof(long));
+		fprintf(stderr, "LoadFromCP: it = %i",it);
 		for (int stateIterator = 0; stateIterator < rat_length; stateIterator++) {
-			checkpointFile.read(reinterpret_cast<char *>(&TEMP_STATES[stateIterator]),
+			checkpointFile.read(reinterpret_cast<char *>(&STATES[stateIterator]),
 					sizeof(double));
+			fprintf(stderr, "\nSTATE[%i]:%f",stateIterator,STATES[stateIterator]);
 		}
-		STATES = TEMP_STATES;
+		//STATES = TEMP_STATES;
+
+		for (int algIterator = 0; algIterator < alg_length; algIterator++) {
+			checkpointFile.read(reinterpret_cast<char *>(&ALGEBRAIC[algIterator]),
+					sizeof(double));
+			fprintf(stderr, "\nALG[%i]:%f",algIterator,ALGEBRAIC[algIterator]);
+		}
+		//ALGEBRAIC = TEMP_ALG;
 	}catch(std::exception & ex){
 		fprintf(stderr, "EXCEPTION%s\n",ex.what());
 		it = 0;
 	}
 
 	checkpointFile.close();
+	return int(it);
 }
 
 void initBoinc() {
@@ -177,8 +192,27 @@ void getFilePaths(char input_path[], char output_path[], const int buffSize) {
 		boinc_finish(rc);
 	}
 }
+int loadModelID(char input_path[]) {
+	FILE* infile = boinc_fopen(input_path, "r");
+	char buf[256], readerBuffer[1024];
+	if (!infile) {
+		fprintf(stderr, "%s Couldn't find input file, resolved name %s.\n",
+				boinc_msg_prefix(buf, sizeof(buf)), input_path);
+		exit(-1);
+	}
 
-CONFIG loadConfiguration(char input_path[]) {
+	int modelID = 0;
+
+	std::string line;
+	line = fgets(readerBuffer, sizeof(readerBuffer), infile);
+	line.erase(line.size() - 1);
+	modelID = getModelId(line.c_str());
+	fprintf(stderr, "MID:%i\n", modelID);
+	return modelID;
+
+}
+
+CONFIG loadConfiguration(char input_path[],const char** constants, const char** rates, const char** states, const char** algebraic,int cons_len, int rat_len, int alg_len) {
 	FILE* infile = boinc_fopen(input_path, "r");
 	char buf[256], readerBuffer[1024];
 	if (!infile) {
@@ -191,9 +225,15 @@ CONFIG loadConfiguration(char input_path[]) {
 	double final_time;
 	double dt;
 	int outputFreq;
+	int modelID = 0;
 
 	//Get Values of Configuration File
 	std::string line;
+	line = fgets(readerBuffer, sizeof(readerBuffer), infile);
+	line.erase(line.size() - 1);
+	modelID = getModelId(line.c_str());
+	fprintf(stderr, "MName:%s\n", line.c_str());
+
 	line = fgets(readerBuffer, sizeof(readerBuffer), infile);
 	final_time = atof(line.c_str());
 	fprintf(stderr, "OpT:%f\n", final_time);
@@ -220,70 +260,100 @@ CONFIG loadConfiguration(char input_path[]) {
 	for (int iteratorConstants = 0; iteratorConstants < numConstantsToChange;
 			iteratorConstants++) {
 		line = fgets(readerBuffer, sizeof(readerBuffer), infile);
-		changedConstants[iteratorConstants].key = atoi(
-				(string_split(line, ' ')[0]).c_str());
+		changedConstants[iteratorConstants].key = getNameId(modelID,(string_split(line, ' ')[0]).c_str(),(string_split(line, ' ')[1]).c_str(),constants,cons_len);//atoi(line.c_str());
+		fprintf(stderr, "CC ID:%i VALUE:%s\n", changedConstants[iteratorConstants].key,(string_split(line, ' ')[2]).c_str());
+
 		changedConstants[iteratorConstants].value = atof(
-				(string_split(line, ' ')[1]).c_str());
+				(string_split(line, ' ')[2]).c_str());
 	}
 
 	line = fgets(readerBuffer, sizeof(readerBuffer), infile);
 	int numStatesToPrint = atoi(line.c_str());
+	fprintf(stderr, "NSTP %s",line.c_str());
 	int * statesToPrint = new int[numStatesToPrint];
-	for (int iteratorRates = 0; iteratorRates < numStatesToPrint;
-			iteratorRates++) {
+	for (int iteratorStates = 0; iteratorStates < numStatesToPrint;
+			iteratorStates++) {
 		line = fgets(readerBuffer, sizeof(readerBuffer), infile);
-		statesToPrint[iteratorRates] = atoi(line.c_str());
+		line.erase(line.size() - 1);
+		statesToPrint[iteratorStates] = getNameId(modelID,(string_split(line, ' ')[0]).c_str(),(string_split(line, ' ')[1]).c_str(),states,rat_len);//atoi(line.c_str());
+		fprintf(stderr, "STP ID:%i - %s in component %s\n", statesToPrint[iteratorStates],string_split(line, ' ')[0].c_str(),string_split(line, ' ')[1].c_str());
 	}
 
-	struct CONFIG cfg = { initial_time, final_time, dt, outputFreq, initPost,
-			lastIteration, numConstantsToChange, numStatesToPrint,
-			changedConstants, statesToPrint };
+	line = fgets(readerBuffer, sizeof(readerBuffer), infile);
+		int numAlgToPrint = atoi(line.c_str());
+		fprintf(stderr, "NATP %s",line.c_str());
+		int * algToPrint = new int[numAlgToPrint];
+		for (int iteratorAlg = 0; iteratorAlg < numAlgToPrint;
+				iteratorAlg++) {
+			line = fgets(readerBuffer, sizeof(readerBuffer), infile);
+			line.erase(line.size() - 1);
+			algToPrint[iteratorAlg] = getNameId(modelID,(string_split(line, ' ')[0]).c_str(),(string_split(line, ' ')[1]).c_str(),algebraic,alg_len);//atoi(line.c_str());
+			fprintf(stderr, "ATP ID:%i - %s in component %s\n", algToPrint[iteratorAlg],string_split(line, ' ')[0].c_str(),string_split(line, ' ')[1].c_str());
+		}
+
+	struct CONFIG cfg = { modelID,initial_time, final_time, dt, outputFreq, initPost,
+			lastIteration, numConstantsToChange, numStatesToPrint,numAlgToPrint,
+			changedConstants, statesToPrint,algToPrint };
 	return cfg;
 }
 
-void solveModel(int rat_length, double* CONSTANTS, double* RATES,
+void solveModel(int rat_length,int alg_length, double* CONSTANTS, double* RATES,
 		double* STATES, double* ALGEBRAIC, CONFIG config, double* &saveStates,
 		const int buffSize) {
 
 	bool *PRINTABLE_STATES = new bool[rat_length];
-
+	bool *PRINTABLE_ALG = new bool[alg_length];
 	std::fill_n(PRINTABLE_STATES, rat_length, false);
+	std::fill_n(PRINTABLE_ALG, alg_length, false);
 
 	double initial_time = config.initial_time;
 	double dt = config.dt;
 	int retval;
 	long it = 0;
+	int modelID = config.modelID;
 	int outputFreq = config.outputFreq;
 	long initPost = config.initPost;
 	long lastIteration = config.lastIteration;
 	int numConstantsToChange = config.numConstantsToChange;
 	int numStatesToPrint = config.numStatesToPrint;
 	int * statesToPrint = config.statesToPrint;
+	int numAlgToPrint = config.numAlgToPrint;
+	int * algToPrint = config.algToPrint;
 	changed_double * ChangedConstants = config.ChangedConstants;
-	int iteratorRates = 0;
+	int simpleIterator = 0;
 
 	for (int iteratorConstants = 0; iteratorConstants < numConstantsToChange;
 			iteratorConstants++)
 		CONSTANTS[ChangedConstants[iteratorConstants].key] =
 				ChangedConstants[iteratorConstants].value;
 
-	for (iteratorRates = 0; iteratorRates < numStatesToPrint; iteratorRates++)
-		PRINTABLE_STATES[statesToPrint[iteratorRates]] = true;
+	for (simpleIterator = 0; simpleIterator < numStatesToPrint; simpleIterator++)
+		PRINTABLE_STATES[statesToPrint[simpleIterator]] = true;
+
+	for (simpleIterator = 0; simpleIterator< numAlgToPrint; simpleIterator++)
+		PRINTABLE_ALG[algToPrint[simpleIterator]] = true;
 
 	saveStates = new double[(int) ((((lastIteration - initPost) / outputFreq)
-			+ 1) * (numStatesToPrint + 1))];
+			+ 1) * (numStatesToPrint + numAlgToPrint+ 1))];
 
 	double VOI = initial_time;
 
 	//If it exists a checkpoint, load data from it
-	loadDataFromCheckPoint(&it, rat_length, buffSize, STATES);
+	it = loadDataFromCheckPoint( rat_length,alg_length, buffSize, STATES,ALGEBRAIC);
 
 	int saveIterator = 0;
+	double last = 1.0 / double(lastIteration);
+
 	for (; it <= lastIteration; it++) {
-		boinc_fraction_done(double(it / lastIteration));
+
+		if ((it % 0x80000) == 0)
+		{
+			double frac = double(it) * last;
+			boinc_fraction_done(frac);
+		}
 
 		VOI = dt * it; //Integration variable, in this case, time
-		computeRates(VOI, CONSTANTS, RATES, STATES, ALGEBRAIC);
+		computeRates(modelID,VOI, CONSTANTS, RATES, STATES, ALGEBRAIC);
 		if (it % outputFreq == 0 && it >= initPost)
 			saveStates[saveIterator++] = VOI;
 
@@ -293,11 +363,18 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 			if (PRINTABLE_STATES[i] && it % outputFreq == 0 && it >= initPost) {
 				saveStates[saveIterator++] = STATES[i];
 			}
-
 		}
 
+		for (int j = 0; j < alg_length; j++) {
+			if (PRINTABLE_ALG[j] && it % outputFreq == 0 && it >= initPost) {
+				saveStates[saveIterator++] = ALGEBRAIC[j];
+			}
+		}
+
+
+
 		if (boinc_time_to_checkpoint()) {
-			retval = do_checkpoint(rat_length, it, buffSize, STATES);
+			retval = do_checkpoint(rat_length,alg_length, it, buffSize, STATES,ALGEBRAIC);
 			if (retval) {
 				fprintf(stderr,
 						"DENIS: checkpoint failed at Iteration %d , retval%d\n",
@@ -311,9 +388,9 @@ void solveModel(int rat_length, double* CONSTANTS, double* RATES,
 
 }
 
-void printResults(char output_path[], double* saveStates, CONFIG config) {
+void printResults(char output_path[], double* saveStates,CONFIG config) {
 	int outputFreq = config.outputFreq;
-	int numStatesToSave = config.numStatesToPrint + 1;
+	int numColumnsToSave = config.numAlgToPrint + config.numStatesToPrint +1;
 	int numIterations = (int) (round(
 			(config.lastIteration - config.initPost) / outputFreq) + 1);
 	FILE* f;
@@ -322,12 +399,12 @@ void printResults(char output_path[], double* saveStates, CONFIG config) {
 	//TODO: HERE A LOOP TO PRINT THE HEADERS
 
 	for (int i = 0; i < numIterations; i++) {
-		for (int j = 0; j < numStatesToSave; j++) {
-			fprintf(f, "%+1.8e", saveStates[i * numStatesToSave + j]);
-			if (j == numStatesToSave - 1)
+		for (int j = 0; j < numColumnsToSave; j++) {
+			fprintf(f, "%+1.8e", saveStates[i * numColumnsToSave + j]);
+			if (j == numColumnsToSave - 1)
 				fprintf(f, "\n");
 			else
-				fprintf(f, "\t");
+			   fprintf(f, "\t");
 		}
 	}
 }

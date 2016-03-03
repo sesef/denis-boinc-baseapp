@@ -22,15 +22,15 @@ using namespace std;
 int main() {
 	const int buffSize = 512;
 	char input_path[buffSize], output_path[buffSize];
+	int modelID;
 
 	initBoinc();
 
 	getFilePaths(input_path, output_path, buffSize);
-
-	CONFIG config = loadConfiguration(input_path);
+	modelID = loadModelID(input_path);
 
 	int alg_length, rat_length, cons_length = 0;
-	vectorsLength(&alg_length, &rat_length, &cons_length);
+	getVectorsLength (modelID,&alg_length, &rat_length, &cons_length);
 
 	double *CONSTANTS = new double[cons_length];
 	double *RATES = new double[rat_length];
@@ -43,13 +43,16 @@ int main() {
 	const char** ALGEBRAIC_names = new const char*[alg_length];
 	double* saveStates;
 
-	initConsts(CONSTANTS, STATES);
 
-	names(VOI_name, CONSTANTS_names, RATES_names, STATES_names,
+	initConsts(modelID,CONSTANTS, STATES);
+
+	names(modelID,VOI_name, CONSTANTS_names, RATES_names, STATES_names,
 			ALGEBRAIC_names);
 
-	solveModel(rat_length, CONSTANTS, RATES, STATES, ALGEBRAIC, config,
-			saveStates, buffSize);
+	CONFIG config = loadConfiguration(input_path,CONSTANTS_names,RATES_names,STATES_names,ALGEBRAIC_names,cons_length,rat_length,alg_length);
+
+	solveModel(rat_length,alg_length, CONSTANTS, RATES, STATES, ALGEBRAIC, config,
+			saveStates,buffSize);
 
 	boinc_begin_critical_section();
 	printResults(output_path, saveStates, config);

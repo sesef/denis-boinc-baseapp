@@ -1,13 +1,12 @@
+Carro_Rodriguez_Laguna_Pueyo_2011_EPI_mod
 3000
 0.002
 50
 2900
-5
-26 0.002
-36 0.00
-41 12.29
-47 0.0673
-56 25.0
-2
-0
 1
+A_CaL L_Type_Calcium_Current 1
+2
+V membrane
+h Fast_Na_Current
+1
+tau_m Fast_Na_Current

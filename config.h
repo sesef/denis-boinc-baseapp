@@ -16,6 +16,7 @@
  *  version: 1.04 - 3 June 2015
  \************************************************************************/
 struct CONFIG {
+	int modelID;
 	double initial_time;
 	double final_time; //ms
 	double dt; //ms
@@ -25,13 +26,16 @@ struct CONFIG {
 
 	int numConstantsToChange;
 	int numStatesToPrint;
+	int numAlgToPrint;
 
 	struct changed_double *ChangedConstants;
 	int * statesToPrint;
+	int * algToPrint;
 };
 
 struct changed_double {
 	int key;
+	string name;
 	double value;
 };
 
