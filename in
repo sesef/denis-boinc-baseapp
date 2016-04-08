@@ -1,12 +1,72 @@
-Carro_Rodriguez_Laguna_Pueyo_2011_EPI_mod
-3000
-0.002
-50
-2900
-1
-A_CaL L_Type_Calcium_Current 1
-2
-V membrane
-h Fast_Na_Current
-1
-tau_m Fast_Na_Current
+<?xml version="1.0"?>
+<!DOCTYPE simulation [
+<!ELEMENT simulation (model,constants_to_change?,output)>
+<!ELEMENT model (name,endtime,diferentialtime,markerv)>
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT endtime (#PCDATA)>
+<!ELEMENT diferentialtime (#PCDATA)>
+<!ELEMENT markerv (name,component)>
+<!ELEMENT constants_to_change (constant+)>
+<!ELEMENT constant (name,component,value)>
+<!ELEMENT component (#PCDATA)>
+<!ELEMENT value (#PCDATA)>
+<!ELEMENT output (frequency,starttime,states?,algebraics?)>
+<!ELEMENT frequency (#PCDATA)>
+<!ELEMENT starttime (#PCDATA)>
+<!ELEMENT states (state+)>
+<!ELEMENT algebraics (algebraic+)>
+<!ELEMENT state (name,component)>
+<!ELEMENT algebraic (name,component)>
+]>
+<simulation>
+	<model>
+	<name>Carro_Rodriguez_Laguna_Pueyo_2011_EPI_opt</name>
+	<endtime>10000</endtime>
+	<diferentialtime>0.002</diferentialtime>
+	<markerv>
+		<name>V</name>
+		<component>membrane</component>
+	</markerv>
+	</model>
+	<constants_to_change>
+		<constant>
+			<name>G_Kp</name>
+			<component>Plateau_K_Current</component>
+			<value>0.002</value>
+		</constant>
+		<constant>
+			<name>p_Na</name>
+			<component>L_Type_Calcium_Current</component>
+			<value>0.00</value>
+		</constant>
+		<constant>
+			<name>Km_Na_i</name>
+			<component>Na_Ca_Exchanger_Current</component>
+			<value>12.29</value>
+		</constant>
+		<constant>
+			<name>Ibar_PMCA</name>
+			<component>Sarcolemmal_Ca_Pump_Current</component>
+			<value>0.0673</value>
+		</constant>
+		<constant>
+			<name>ks</name>
+			<component>SR_Fluxes</component>
+			<value>25.0</value>
+		</constant>
+	</constants_to_change>
+	<output>
+	<frequency>50</frequency>
+	<starttime>0</starttime>
+		<states>
+			<state>
+				<name>V</name>
+				<component>membrane</component>
+			</state>
+			<state>
+				<name>m</name>
+				<component>Fast_Na_Current</component>
+			</state>
+		</states>
+</output>
+</simulation>

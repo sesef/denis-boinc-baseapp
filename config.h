@@ -2,8 +2,9 @@
  *  DENIS@HOME Boinc Application
  *   
  *  This application is based on Hello World app from Boinc source code
- *  The initial parameters and the method to perform the calculus is 
- *  inside the model.h file. 
+ *
+ *  With this simulator you can run different electrophysiological models
+ *  modifying the configuration file
  *
  *  If you run it in standalone mode, the file with parameters must be 
  *  called 'in' ( without quotes and without extension)
@@ -13,8 +14,10 @@
  *
  *  Jesus Carro <jcarro@usj.es> 
  *  Joel Castro <jcastro@usj.es>
- *  version: 1.04 - 3 June 2015
+ *  version: Natrium - 16 March 2016
  \************************************************************************/
+#ifndef CONFIG_H_
+#define CONFIG_H_
 struct CONFIG {
 	int modelID;
 	double initial_time;
@@ -27,6 +30,7 @@ struct CONFIG {
 	int numConstantsToChange;
 	int numStatesToPrint;
 	int numAlgToPrint;
+	int vIndex;
 
 	struct changed_double *ChangedConstants;
 	int * statesToPrint;
@@ -35,7 +39,7 @@ struct CONFIG {
 
 struct changed_double {
 	int key;
-	string name;
 	double value;
 };
 
+#endif /* CONFIG_H_ */

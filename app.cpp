@@ -2,8 +2,9 @@
  *  DENIS@HOME Boinc Application
  *   
  *  This application is based on Hello World app from Boinc source code
- *  The initial parameters and the method to perform the calculus is 
- *  inside the model.h file. 
+ *
+ *  With this simulator you can run different electrophysiological models
+ *  modifying the configuration file
  *
  *  If you run it in standalone mode, the file with parameters must be 
  *  called 'in' ( without quotes and without extension)
@@ -13,7 +14,7 @@
  *
  *  Jesus Carro <jcarro@usj.es> 
  *  Joel Castro <jcastro@usj.es>
- *  version: 1.04 - 3 June 2015
+ *  version: Natrium - 16 March 2016
  \************************************************************************/
 #include "functions.h"
 
@@ -21,12 +22,12 @@ using namespace std;
 
 int main() {
 	const int buffSize = 512;
-	char input_path[buffSize], output_path[buffSize];
+	char input_path[buffSize], output_path[buffSize],markers_path[buffSize];
 	int modelID;
 
 	initBoinc();
 
-	getFilePaths(input_path, output_path, buffSize);
+	getFilePaths(input_path, output_path, markers_path,buffSize);
 	modelID = loadModelID(input_path);
 
 	int alg_length, rat_length, cons_length = 0;
@@ -42,6 +43,8 @@ int main() {
 	const char** STATES_names = new const char*[rat_length];
 	const char** ALGEBRAIC_names = new const char*[alg_length];
 	double* saveStates;
+	double* vState;
+	double* t;
 
 
 	initConsts(modelID,CONSTANTS, STATES);
@@ -49,13 +52,14 @@ int main() {
 	names(modelID,VOI_name, CONSTANTS_names, RATES_names, STATES_names,
 			ALGEBRAIC_names);
 
-	CONFIG config = loadConfiguration(input_path,CONSTANTS_names,RATES_names,STATES_names,ALGEBRAIC_names,cons_length,rat_length,alg_length);
+	CONFIG config = loadConfiguration(input_path,CONSTANTS_names,STATES_names,ALGEBRAIC_names,cons_length,rat_length,alg_length,modelID);
 
 	solveModel(rat_length,alg_length, CONSTANTS, RATES, STATES, ALGEBRAIC, config,
-			saveStates,buffSize);
+			t,saveStates,vState,buffSize);
 
 	boinc_begin_critical_section();
 	printResults(output_path, saveStates, config);
+	saveMarkers(markers_path,t, vState, config);
 	boinc_end_critical_section();
 	boinc_finish(0);
 }

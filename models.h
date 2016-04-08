@@ -39,7 +39,6 @@
                                                      http://eps.usj.es  
                                                                         
 ======================================================================*/
-#include "simd.h"
 #include "ten_tusscher_model_2006_IK1Ko_epi_units.h"
 #include "tentusscher_noble_noble_panfilov_2004_a.h"
 #include "Carro_Rodriguez_Laguna_Pueyo_2011_EPI_opt.h"
